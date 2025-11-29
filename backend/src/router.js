@@ -24,16 +24,16 @@ router.put('/usuarios/:id', isAuth, isAdmin, usuarioController.atualizarUsuario)
 router.delete('/usuarios/:id', isAuth, isAdmin, usuarioController.deletarUsuario);
 
 // Clientes
-router.get('/clientes', clienteController);
-router.post('/clientes', clienteController);
-router.put('/clientes/:id', clienteController);
-router.delete('/clientes/:id', clienteController);
+router.get('/clientes', isAuth, clienteController.listarClientes);
+router.post('/clientes', isAuth, clienteController.criarCliente);
+router.put('/clientes/:id', isAuth, clienteController.atualizarCliente);
+router.delete('/clientes/:id', isAuth, clienteController.deletarCliente);
 
 // Arquivos
-router.get('/arquivos', arquivoController);
-router.post('/arquivos', arquivoController);
-router.put('/arquivos/:id', arquivoController);
-router.delete('/arquivos/:id', arquivoController);
+router.get('/arquivos', isAuth, arquivoController.listarArquivos);
+router.post('/arquivos', isAuth, arquivoController.criarArquivo);
+router.put('/arquivos/:id', isAuth, arquivoController.atualizarArquivo);
+router.delete('/arquivos/:id', isAuth, arquivoController.deletarArquivo);
 
 // Documentos
 // UPLOAD
