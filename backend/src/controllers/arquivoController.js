@@ -1,4 +1,6 @@
 const db = require("../db_connection");
+const path = require('path');
+const fs = require('fs');
 
 async function listarArquivos(req, res) {
   try {
@@ -16,7 +18,7 @@ async function listarArquivos(req, res) {
     return res.json(rows);
   } catch (error) {
     console.error("Erro ao listar arquivos:", error);
-    return res.status(500).json({ error: "Erro ao listar registros." });
+    return res.status(500).json({ error: "Erro ao listar arquivos." });
   }
 }
 
@@ -34,10 +36,15 @@ async function criarArquivo(req, res) {
       [cliente_locador_id, cliente_locatario_id, data_inicio, data_fim || null, status, observacoes || null]
     );
 
-    return res.json({ message: "Registro criado com sucesso!", id: result.insertId });
+    const dir = path.join(__dirname, "..", "uploads", `arquivo_${result.insertId}`);
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+    }
+
+    return res.json({ message: "Arquivo criado com sucesso!", id: result.insertId });
   } catch (error) {
     console.error("Erro ao criar arquivo:", error);
-    return res.status(500).json({ error: "Erro ao criar registro." });
+    return res.status(500).json({ error: "Erro ao criar arquivo." });
   }
 }
 
@@ -48,16 +55,16 @@ async function atualizarArquivo(req, res) {
     const { cliente_locador_id, cliente_locatario_id, data_inicio, data_fim, status, observacoes } = req.body;
 
     const [existe] = await db.query("SELECT * FROM arquivos WHERE id = ?", [id]);
-    if (existe.length === 0) return res.status(404).json({ error: "Registro não encontrado." });
+    if (existe.length === 0) return res.status(404).json({ error: "Arquivo não encontrado." });
 
     await db.query(`UPDATE arquivos SET cliente_locador_id=?, cliente_locatario_id=?, data_inicio=?, data_fim=?, status=?, observacoes=?, updated_at=CURRENT_TIMESTAMPWHERE id=?`,
       [cliente_locador_id, cliente_locatario_id, data_inicio, data_fim || null, status, observacoes || null, id]
     );
 
-    return res.json({ message: "Registro atualizado com sucesso!" });
+    return res.json({ message: "Arquivo atualizado com sucesso!" });
   } catch (error) {
     console.error("Erro ao atualizar arquivo:", error);
-    return res.status(500).json({ error: "Erro ao atualizar registro." });
+    return res.status(500).json({ error: "Erro ao atualizar arquivo." });
   }
 }
 
@@ -66,14 +73,19 @@ async function deletarArquivo(req, res) {
     const { id } = req.params;
 
     const [existe] = await db.query("SELECT * FROM arquivos WHERE id = ?", [id]);
-    if (!existe.length) return res.status(404).json({ error: "Registro não encontrado." });
+    if (!existe.length) return res.status(404).json({ error: "Arquivo não encontrado." });
 
     await db.query("DELETE FROM arquivos WHERE id = ?", [id]);
 
-    return res.json({ message: "Registro deletado com sucesso!" });
+    const dir = path.join(__dirname, "..", "uploads", `arquivo_${id}`);
+    if (fs.existsSync(dir)) {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+
+    return res.json({ message: "Arquivo deletado com sucesso!" });
   } catch (error) {
     console.error("Erro ao deletar arquivo:", error);
-    return res.status(500).json({ error: "Erro ao deletar registro." });
+    return res.status(500).json({ error: "Erro ao deletar arquivo." });
   }
 }
 

@@ -1,4 +1,5 @@
 const express = require('express');
+const upload = require('./config/multer');
 
 const authController = require('./controllers/authController');
 const usuarioController = require('./controllers/usuarioController');
@@ -36,14 +37,10 @@ router.put('/arquivos/:id', isAuth, arquivoController.atualizarArquivo);
 router.delete('/arquivos/:id', isAuth, arquivoController.deletarArquivo);
 
 // Documentos
-// UPLOAD
-router.post('/arquivos/:id/documentos', documentoController);
-// LISTAGEM
-router.get('/arquivos/:id/documentos', documentoController);
-// DOWNLOAD
-router.get('/arquivos/:id/documentos/:docId/download', documentoController);
-// DELETE
-router.delete('/arquivos/:id/documentos', documentoController);
+router.post('/arquivos/:id/documentos', upload.single('documento'), isAuth, documentoController.uploadDocumento);
+router.get('/arquivos/:id/documentos', isAuth, documentoController.listarDocumentos);
+router.get('/arquivos/:id/documentos/:docId/download', isAuth, documentoController.downloadDocumento);
+router.delete('/arquivos/:id/documentos/:docId/delete', isAuth, documentoController.deletarDocumento);
 
 // Pesquisa avançada
 router.get('/search/clientes', searchController);
