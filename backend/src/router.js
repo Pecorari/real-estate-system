@@ -43,13 +43,10 @@ router.get('/arquivos/:id/documentos/:docId/download', isAuth, documentoControll
 router.delete('/arquivos/:id/documentos/:docId/delete', isAuth, documentoController.deletarDocumento);
 
 // Pesquisa avançada
-router.get('/search/clientes', searchController);
-router.get('/search/arquivos', searchController);
+router.get('/search/clientes', isAuth, searchController.searchClientes);
+router.get('/search/arquivos', isAuth, searchController.searchArquivos);
 
 // Logs
-router.get('/logs', logController)
-router.get('/logs?usuario_id', logController)
-router.get('/logs?acao', logController)
-router.get('/logs?arquivo&entidade_id', logController)
+router.get('/logs', logController.logController);
 
 module.exports = router;
