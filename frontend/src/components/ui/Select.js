@@ -1,4 +1,4 @@
-export function Select({ label, children, ...props }) {
+export default function Select({ label, children, ...props }) {
   return (
     <div className="flex flex-col mb-3 w-full">
       {label && <label className="text-sm font-medium mb-1">{label}</label>}

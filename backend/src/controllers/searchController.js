@@ -2,29 +2,46 @@ const connection = require('../config/db_connection');
 
 const searchClientes = async (req, res) => {
   try {
-    const { nome, cpf_cnpj, tipo } = req.query;
+    const { q, id, nome, cpf_cnpj, tipo } = req.query;
 
     let query = `
       SELECT c.*, 
       COUNT(a.id) AS total_arquivos
       FROM clientes c
-      LEFT JOIN arquivos a ON a.cliente_id = c.id
+      LEFT JOIN arquivos a 
+        ON (a.cliente_locador_id = c.id OR a.cliente_locatario_id = c.id)
       WHERE 1 = 1
     `;
     const params = [];
 
-    if (nome) {
-      query += ` AND c.nome LIKE ?`;
-      params.push(`%${nome}%`);
-    }
+    if (q && q.trim() !== "") {
+      const likeQ = `%${q.trim()}%`;
+      query += ` AND (
+        c.id LIKE ?
+        OR c.nome LIKE ?
+        OR c.cpf_cnpj LIKE ?
+      )`;
+      params.push(likeQ, likeQ, likeQ);
+    } else {
 
-    if (cpf_cnpj) {
-      query += ` AND c.cpf_cnpj = ?`;
-      params.push(cpf_cnpj);
+      if (id) {
+        query += ` AND c.id LIKE ?`;
+        params.push(`%${id}%`);
+      }
+
+      if (nome) {
+        query += ` AND c.nome LIKE ?`;
+        params.push(`%${nome}%`);
+      }
+
+      if (cpf_cnpj) {
+        query += ` AND c.cpf_cnpj LIKE ?`;
+        params.push(`%${cpf_cnpj}%`);
+      }
     }
 
     if (tipo) {
-      query += ` AND c.tipo = ?`;
+      query += ` AND c.tipo LIKE ?`;
       params.push(`%${tipo}%`);
     }
 

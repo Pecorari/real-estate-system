@@ -27,9 +27,6 @@ export default function Usuarios() {
   const [editId, setEditId] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
 
-  // ============================
-  // Buscar usuários
-  // ============================
   const carregarUsuarios = async () => {
     try {
       const { data } = await api.get("/usuarios");
@@ -45,9 +42,6 @@ export default function Usuarios() {
     carregarUsuarios();
   }, []);
 
-  // ============================
-  // Abrir modal de criar
-  // ============================
   const abrirCriar = () => {
     setForm({
       nome: "",
@@ -59,9 +53,6 @@ export default function Usuarios() {
     setModalOpen(true);
   };
 
-  // ============================
-  // Abrir modal de editar
-  // ============================
   const abrirEditar = (user) => {
     setEditId(user.id);
     setForm({
@@ -73,9 +64,6 @@ export default function Usuarios() {
     setModalOpen(true);
   };
 
-  // ============================
-  // Salvar usuário (criar ou editar)
-  // ============================
   const salvarUsuario = async (e) => {
     e.preventDefault();
 
@@ -96,9 +84,6 @@ export default function Usuarios() {
     }
   };
 
-  // ============================
-  // Deletar usuário
-  // ============================
   const deletarUsuario = async () => {
     try {
       await api.delete(`/usuarios/${deleteId}`);
@@ -161,7 +146,6 @@ export default function Usuarios() {
         </main>
       </div>
 
-      {/* MODAL CRIAR/EDITAR */}
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)}>
         <h2 className="text-lg font-semibold mb-3">
           {editId ? "Editar Usuário" : "Novo Usuário"}
@@ -208,7 +192,6 @@ export default function Usuarios() {
         </form>
       </Modal>
 
-      {/* MODAL DELETE */}
       <Modal isOpen={modalDeleteOpen} onClose={() => setModalDeleteOpen(false)}>
         <h2 className="text-lg font-semibold mb-4">Excluir usuário?</h2>
         <p>Essa ação não poderá ser desfeita.</p>

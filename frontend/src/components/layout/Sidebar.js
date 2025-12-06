@@ -1,24 +1,22 @@
+import { useAuth } from "../../context/authContext";
+import { useNavigate, Link } from "react-router-dom";
+
 export default function Sidebar() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
   return (
     <aside className="w-64 bg-white border-r shadow-sm p-4 hidden md:block">
       <h2 className="text-xl font-bold mb-6">Imobiliária</h2>
 
       <nav className="flex flex-col gap-4">
-        <a className="text-gray-700 hover:text-blue-600" href="/dashboard">
-          Dashboard
-        </a>
+        <Link className="text-gray-700 hover:text-blue-600" to="/dashboard">Dashboard</Link>
 
-        <a className="text-gray-700 hover:text-blue-600" href="/clientes">
-          Clientes
-        </a>
+        <Link className="text-gray-700 hover:text-blue-600" to="/clientes">Clientes</Link>
 
-        <a className="text-gray-700 hover:text-blue-600" href="/arquivos">
-          Arquivos
-        </a>
-        
-        <a className="text-gray-700 hover:text-blue-600" href="/usuarios">
-          Usuarios
-        </a>
+        <Link className="text-gray-700 hover:text-blue-600" to="/arquivos">Arquivos</Link>
+
+        {(user.role === 'admin') ? <Link className="text-gray-700 hover:text-blue-600" to="/usuarios">Usuarios</Link> : <></>}
       </nav>
     </aside>
   );
