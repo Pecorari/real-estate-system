@@ -15,6 +15,10 @@ export default function Sidebar() {
         <a className="text-gray-700 hover:text-blue-600" href="/arquivos">
           Arquivos
         </a>
+        
+        <a className="text-gray-700 hover:text-blue-600" href="/usuarios">
+          Usuarios
+        </a>
       </nav>
     </aside>
   );

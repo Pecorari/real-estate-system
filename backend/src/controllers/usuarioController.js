@@ -14,9 +14,9 @@ async function listarUsuarios(req, res) {
 
 async function criarUsuario(req, res) {
   try {
-    const { nome, email, senha, role } = req.body;
+    const { nome, email, senha, tipo } = req.body;
 
-    if (!nome || !email || !senha || !role)
+    if (!nome || !email || !senha || !tipo)
         return res.status(400).json({ error: "Todos os campos são obrigatórios." });
 
     const [existe] = await db.query(`SELECT id FROM usuarios WHERE email = ?`, [email]);
@@ -26,14 +26,14 @@ async function criarUsuario(req, res) {
 
     const senhaHash = await bcrypt.hash(senha, 10);
 
-    const [result] = await db.query(`INSERT INTO usuarios (nome, email, senha, role) VALUES (?, ?, ?, ?)`, [nome, email, senhaHash, role]);
+    const [result] = await db.query(`INSERT INTO usuarios (nome, email, senha, role) VALUES (?, ?, ?, ?)`, [nome, email, senhaHash, tipo]);
 
     return res.status(201).json({ message: "Usuário criado com sucesso!",
       usuario: {
         id: result.insertId,
         nome,
         email,
-        role
+        role: tipo
       }
     });
   } catch (error) {
@@ -45,19 +45,19 @@ async function criarUsuario(req, res) {
 async function atualizarUsuario(req, res) {
   try {
     const { id } = req.params;
-    const { nome, email, senha, role } = req.body;
+    const { nome, email, senha, tipo } = req.body;
 
     const [existe] = await db.query(`SELECT * FROM usuarios WHERE id = ?`, [id]);
 
     if (existe.length === 0)
       return res.status(404).json({ error: "Usuário não encontrado." });
 
-    let senhaHash = existe[0].senha_hash;
-    if (senha) {
+    let senhaHash = existe[0].senha;
+    if (senha || senha.trim() !== "") {
       senhaHash = await bcrypt.hash(senha, 10);
     }
 
-    await db.query(`UPDATE usuarios SET nome = ?, email = ?, senha = ?, role = ? WHERE id = ?`,[nome, email, senhaHash, role, id]);
+    await db.query(`UPDATE usuarios SET nome = ?, email = ?, senha = ?, role = ? WHERE id = ?`,[nome, email, senhaHash, tipo, id]);
 
     return res.json({ message: "Usuário atualizado com sucesso!" });
   } catch (error) {
