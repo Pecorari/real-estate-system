@@ -1,4 +1,4 @@
-const connection = require('../db');
+const connection = require('../config/db_connection');
 
 const searchClientes = async (req, res) => {
   try {

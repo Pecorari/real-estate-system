@@ -16,7 +16,7 @@ const TOKEN_EXPIRES = "7d";
 
         const usuario = rows[0];
 
-        const senhaMatch = await bcrypt.compare(senha, usuario.senha_hash);
+        const senhaMatch = await bcrypt.compare(senha, usuario.senha);
 
         if (!senhaMatch) return res.status(401).json({ error: "Credenciais inválidas." });
 

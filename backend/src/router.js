@@ -20,7 +20,7 @@ router.get('/auth/me', isAuth, authController.me);
 
 // Usuarios (admin only)
 router.get('/usuarios', isAuth, isAdmin, usuarioController.listarUsuarios);
-router.post('/usuarios', isAuth, isAdmin, usuarioController.criarUsuario);
+router.post('/usuarios', usuarioController.criarUsuario);
 router.put('/usuarios/:id', isAuth, isAdmin, usuarioController.atualizarUsuario);
 router.delete('/usuarios/:id', isAuth, isAdmin, usuarioController.deletarUsuario);
 

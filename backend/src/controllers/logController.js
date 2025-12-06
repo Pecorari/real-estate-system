@@ -1,4 +1,4 @@
-const connection = require("../db/connection");
+const connection = require("../config/db_connection");
 
 const logController = async (req, res) => {
   try {
