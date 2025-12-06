@@ -1,8 +1,7 @@
 import { useAuth } from "../../context/authContext";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 export default function Sidebar() {
-  const navigate = useNavigate();
   const { user } = useAuth();
 
   return (

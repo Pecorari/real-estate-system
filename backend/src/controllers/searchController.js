@@ -41,11 +41,12 @@ const searchClientes = async (req, res) => {
     }
 
     if (tipo) {
-      query += ` AND c.tipo LIKE ?`;
+      query += ` AND c.tipo LIKE ? OR c.tipo = 'ambos'`;
       params.push(`%${tipo}%`);
     }
 
     query += ` GROUP BY c.id`;
+    query += ` ORDER BY id DESC`;
 
     const [rows] = await connection.execute(query, params);
 
@@ -58,13 +59,13 @@ const searchClientes = async (req, res) => {
 
 const searchArquivos = async (req, res) => {
   try {
-    const { cliente_locador_id, cliente_locatario_id, data_ini, data_fim, status } = req.query;
+    const { q, id, locador, locatario, data_ini, data_fim, status } = req.query;
 
     let query = `
       SELECT 
         a.*,
-        c1.nome AS nome_locador,
-        c2.nome AS nome_locatario
+        c1.nome AS locador_nome,
+        c2.nome AS locatario_nome
       FROM arquivos a
       LEFT JOIN clientes c1 ON c1.id = a.cliente_locador_id
       LEFT JOIN clientes c2 ON c2.id = a.cliente_locatario_id
@@ -72,21 +73,32 @@ const searchArquivos = async (req, res) => {
     `;
     const params = [];
 
-    if (cliente_locador_id) {
-      query += ` AND a.cliente_locador_id = ?`;
-      params.push(cliente_locador_id);
-    }
+    if (q && q.trim() !== "") {
+      const likeQ = `%${q.trim()}%`;
+      query += ` AND (
+        a.id LIKE ?
+        OR c1.nome LIKE ?
+        OR c2.nome LIKE ?
+      )`;
+      params.push(likeQ, likeQ, likeQ);
 
-    if (cliente_locatario_id) {
-      query += ` AND a.cliente_locatario_id = ?`;
-      params.push(cliente_locatario_id);
-    }
+    } else {
+      if (id) {
+        query += ` AND a.id LIKE ?`;
+        params.push(`%${id}%`);
+      }
 
-    if (status) {
-      query += ` AND a.status = ?`;
-      params.push(status);
-    }
+      if (locador) {
+        query += ` AND c1.nome = ?`;
+        params.push(locador);
+      }
 
+      if (locatario) {
+        query += ` AND c2.nome = ?`;
+        params.push(locatario);
+      }
+    }
+    
     if (data_ini) {
       query += ` AND a.data_inicio >= ?`;
       params.push(data_ini);
@@ -96,6 +108,13 @@ const searchArquivos = async (req, res) => {
       query += ` AND a.data_fim <= ?`;
       params.push(data_fim);
     }
+
+    if (status) {
+      query += ` AND a.status = ?`;
+      params.push(status);
+    }
+
+    query += ` ORDER BY id DESC`;
 
     const [rows] = await connection.execute(query, params);
 
