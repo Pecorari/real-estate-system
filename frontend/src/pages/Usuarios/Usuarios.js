@@ -6,9 +6,11 @@ import Input from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 import Table from "../../components/ui/Table";
 import Modal from "../../components/ui/Modal";
+import Select from "../../components/ui/Select";
 
 import Navbar from "../../components/layout/Navbar";
 import Sidebar from "../../components/layout/Sidebar";
+import Footer from "../../components/layout/Footer";
 
 export default function Usuarios() {
   const [usuarios, setUsuarios] = useState([]);
@@ -99,13 +101,13 @@ export default function Usuarios() {
     <div className="flex min-h-screen bg-gray-100">
       <Sidebar />
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col overflow-auto">
         <Navbar />
 
-        <main className="p-6">
+        <main className="p-6 flex-1">
           <Card>
             <div className="flex justify-between items-center mb-4">
-              <h1 className="text-xl font-semibold">Usuários</h1>
+              <h1 className="text-2xl font-bold">Usuários</h1>
 
               <Button onClick={abrirCriar}>+ Novo Usuário</Button>
             </div>
@@ -144,6 +146,8 @@ export default function Usuarios() {
             )}
           </Card>
         </main>
+
+        <Footer />
       </div>
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)}>
@@ -177,14 +181,14 @@ export default function Usuarios() {
             />
           )}
 
-          <select
-            className="border rounded px-3 py-2 w-full mt-2"
+          <Select
+            label="Tipo"
             value={form.tipo}
             onChange={(e) => setForm({ ...form, tipo: e.target.value })}
           >
             <option value="admin">Administrador</option>
-            <option value="user">Usuario</option>
-          </select>
+            <option value="user">Usuário</option>
+          </Select>
 
           <Button className="mt-4 w-full" type="submit">
             Salvar

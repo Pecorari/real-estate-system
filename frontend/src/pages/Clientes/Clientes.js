@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Navbar from "../../components/layout/Navbar";
 import Sidebar from "../../components/layout/Sidebar";
+import Footer from "../../components/layout/Footer";
 import Card from "../../components/ui/Card";
 import Table from "../../components/ui/Table";
 import Input from "../../components/ui/Input";
@@ -137,14 +138,19 @@ export default function Clientes() {
     <div className="flex h-screen bg-gray-100">
       <Sidebar />
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 flex flex-col overflow-auto">
         <Navbar />
 
-        <div className="p-6">
+        <div className="p-6 flex-1">
           <Card>
-            <h2 className="text-xl font-semibold mb-4">Clientes</h2>
+            <div className="relative mb-4">
+              <h2 className="text-2xl font-bold text-center">Clientes</h2>
+              <div className="absolute right-0 top-0">
+                <Button onClick={abrirCriar}>+ Cadastrar Cliente</Button>
+              </div>
+            </div>
 
-            <div className="flex flex-col md:flex-row gap-4 mb-4">
+            <div className="flex flex-col md:flex-row gap-4 mb-4 w-1/3">
               <Input
                 label="Pesquisar"
                 placeholder="ID, Nome, CPF/CNPJ"
@@ -158,14 +164,12 @@ export default function Clientes() {
                   value={tipo}
                   onChange={(e) => handleTipo(e.target.value)}
                 >
-                  <option value="">Todos</option>
+                  <option value="">— Todos —</option>
                   <option value="locador">Locador</option>
                   <option value="locatario">Locatário</option>
                   <option value="ambos">Ambos</option>
                 </Select>
               </div>
-
-              <Button onClick={abrirCriar} className="md:w-auto">+ Cadastrar Cliente</Button>
             </div>
 
             {loading ? (
@@ -204,6 +208,8 @@ export default function Clientes() {
             )}
           </Card>
         </div>
+
+        <Footer />
       </div>
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)}>
@@ -233,14 +239,15 @@ export default function Clientes() {
             onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
           />
 
-          <select className="border rounded px-3 py-2 w-full mt-2"
+          <Select
+            label="Tipo"
             value={form.tipo}
             onChange={(e) => setForm({ ...form, tipo: e.target.value })}
           >
             <option value="locador">Locador</option>
             <option value="locatario">Locatário</option>
             <option value="ambos">Ambos</option>
-          </select>
+          </Select>
 
           <Button type="submit" className="mt-4 w-full">
             Salvar

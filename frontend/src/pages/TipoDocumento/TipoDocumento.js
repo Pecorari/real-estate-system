@@ -9,6 +9,7 @@ import Modal from "../../components/ui/Modal";
 
 import Navbar from "../../components/layout/Navbar";
 import Sidebar from "../../components/layout/Sidebar";
+import Footer from "../../components/layout/Footer";
 
 export default function TipoDocumento() {
     const [tipos, setTipos] = useState([]);
@@ -77,13 +78,14 @@ export default function TipoDocumento() {
     };
 
     return (
-        <div className="flex min-h-screen bg-gray-100"> <Sidebar />
+        <div className="flex min-h-screen bg-gray-100">
+            <Sidebar />
             <div className="flex-1 flex flex-col">
                 <Navbar />
-                <main className="p-6">
+                <main className="p-6 flex-1 overflow-auto">
                     <Card>
                         <div className="flex justify-between items-center mb-4">
-                            <h1 className="text-xl font-semibold">Tipos de Documento</h1>
+                            <h1 className="text-2xl font-bold">Tipos de Documento</h1>
                             <Button onClick={abrirCriar}>+ Novo Tipo</Button>
                         </div>
 
@@ -119,6 +121,7 @@ export default function TipoDocumento() {
                         )}
                     </Card>
                 </main>
+                <Footer />
             </div>
 
             <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)}>

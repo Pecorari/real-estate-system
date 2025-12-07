@@ -13,11 +13,11 @@ export default function Table({ columns, data, onRowClick }) {
           {data.map((row, i) => (
             <tr
               key={i}
-              className={`border-t ${onRowClick ? 'hover:bg-gray-100 cursor-pointer' : ''}`}
+              className={`border-t hover:bg-gray-100 transition ${onRowClick ? 'cursor-pointer hover:text-blue-700' : ''}`}
               onClick={() => onRowClick && onRowClick(row)}
             >
               {Object.values(row).map((value, j) => (
-                <td key={j} className="px-4 py-2">
+                <td key={j} className='px-4 py-2'>
                   {value}
                 </td>
               ))}

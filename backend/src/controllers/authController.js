@@ -18,13 +18,13 @@ async function login(req, res) {
 
       if (!senhaMatch) return res.status(401).json({ error: "Credenciais inválidas." });
 
-      const token = jwt.sign({ id: usuario.id, nome: usuario.nome, role: usuario.role }, process.env.JWT_SECRET, { expiresIn: TOKEN_EXPIRES });
+      const token = jwt.sign({ id: usuario.id, nome: usuario.nome, role: usuario.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
       res.cookie("token", token, {
           httpOnly: true,
           secure: false, // colocar true em produção com HTTPS
           sameSite: "strict",
-          maxAge: 7 * 24 * 60 * 60 * 1000
+          maxAge: 24 * 60 * 60 * 1000 
       });
 
       return res.json({ message: "Login realizado com sucesso!", usuario: {
