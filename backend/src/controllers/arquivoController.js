@@ -57,7 +57,7 @@ async function atualizarArquivo(req, res) {
     const [existe] = await db.query("SELECT * FROM arquivos WHERE id = ?", [id]);
     if (existe.length === 0) return res.status(404).json({ error: "Arquivo não encontrado." });
 
-    await db.query(`UPDATE arquivos SET cliente_locador_id=?, cliente_locatario_id=?, data_inicio=?, data_fim=?, status=?, observacoes=?, updated_at=CURRENT_TIMESTAMPWHERE id=?`,
+    await db.query(`UPDATE arquivos SET cliente_locador_id=?, cliente_locatario_id=?, data_inicio=?, data_fim=?, status=?, observacoes=? WHERE id=?`,
       [cliente_locador_id, cliente_locatario_id, data_inicio, data_fim || null, status, observacoes || null, id]
     );
 

@@ -16,6 +16,8 @@ export default function Sidebar() {
         <Link className="text-gray-700 hover:text-blue-600" to="/arquivos">Arquivos</Link>
 
         {(user.role === 'admin') ? <Link className="text-gray-700 hover:text-blue-600" to="/usuarios">Usuarios</Link> : <></>}
+
+        {(user.role === 'admin') ? <Link className="text-gray-700 hover:text-blue-600" to="/tipo-documento">Tipos de Documentos</Link> : <></>}
       </nav>
     </aside>
   );

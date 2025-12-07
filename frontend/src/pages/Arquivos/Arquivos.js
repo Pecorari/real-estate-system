@@ -8,7 +8,7 @@ import { Button } from "../../components/ui/Button";
 import api from "../../hooks/useApi";
 import Input from "../../components/ui/Input";
 import Select from "../../components/ui/Select";
-import ModalCriarArquivo from "./ModalCriarArquivo";
+import ModalArquivo from "./ModalArquivo";
 
 export default function Arquivos() {
   const [arquivos, setArquivos] = useState([]);
@@ -118,7 +118,7 @@ export default function Arquivos() {
         </div>
       </div>
 
-      <ModalCriarArquivo
+      <ModalArquivo
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onCreated={carregarArquivos}

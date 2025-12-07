@@ -117,7 +117,6 @@ export default function Clientes() {
     pesquisarClientes(valor, tipo);
   };
 
-  /** Quando troca o select */
   const handleTipo = (valor) => {
     setTipo(valor);
     pesquisarClientes(search, valor);

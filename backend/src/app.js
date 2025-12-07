@@ -13,7 +13,8 @@ BigInt.prototype.toJSON = function () {
 
 app.use(cors({
   origin: process.env.BASE_URL,
-  credentials: true
+  credentials: true,
+  exposedHeaders: ["X-File-Name", "Content-Disposition"]
 }));
 
 app.use(cookieParser());

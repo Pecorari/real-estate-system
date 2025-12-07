@@ -9,18 +9,19 @@ const uploadDocumento = async (req, res) => {
 
         if (!req.file) return res.status(400).json({ error: "Nenhum arquivo enviado." });
 
-        const nomeArquivo = req.file.filename;
-        const caminho = req.file.path;
+        const nomeArquivoSalvo = req.file.filename;
+        const nomeOriginal = req.file.originalname;
+        const caminho = path.relative(path.join(__dirname, ".."), req.file.path);
 
         if (!tipo_documento_id) return res.status(400).json({ error: "tipo_documento_id é obrigatório." });
 
-        const [result] = await connection.execute(`INSERT INTO documentos (arquivo_id, tipo_documento_id, nome, caminho) VALUES (?, ?, ?, ?)`,
-            [arquivoId, tipo_documento_id, nomeArquivo, caminho]
+        const [result] = await connection.execute(`INSERT INTO documentos (arquivo_id, tipo_documento_id, nome_original, nome, caminho) VALUES (?, ?, ?, ?, ?)`,
+            [arquivoId, tipo_documento_id, nomeOriginal, nomeArquivoSalvo, caminho]
         );
 
         return res.status(201).json({ message: "Documento enviado com sucesso!",
             documento_id: result.insertId,
-            arquivo: nomeArquivo
+            arquivo: nomeOriginal
         });
     } catch (error) {
         console.error("Erro ao fazer upload do documento:", error);
@@ -45,16 +46,28 @@ const downloadDocumento = async (req, res) => {
     try {
         const arquivoId = req.params.id;
         const docId = req.params.docId;
-
         const [[doc]] = await connection.execute(`SELECT * FROM documentos WHERE id = ? AND arquivo_id = ?`, [docId, arquivoId]);
-
+        
         if (!doc) return res.status(404).json({ error: "Documento não encontrado." });
-
-        const filePath = path.resolve(doc.caminho);
-
+        
+        const filePath = path.join(__dirname, "..", doc.caminho);
+        
         if (!fs.existsSync(filePath)) return res.status(404).json({ error: "Arquivo físico não encontrado no servidor." });
+        
+        const nomeSanitizado = doc.nome_original?.replace(/[^\w.\-() ]+/g, "") || "arquivo.pdf";
 
-        return res.download(filePath, doc.nome);
+        res.set({
+            "Content-Type": "application/pdf",
+            "Content-Disposition": `attachment; filename="${nomeSanitizado}"`,
+            "X-File-Name": nomeSanitizado,
+        });
+        
+        return res.download(filePath, nomeSanitizado, (err) => {
+            if (err) {
+                console.error("Erro ao enviar arquivo:", err);
+                return res.status(500).json({ error: "Erro ao enviar arquivo" });
+            }
+        });
     } catch (error) {
         console.error("Erro ao fazer download do documento:", error);
         return res.status(500).json({ error: "Erro ao fazer download do documento" });
@@ -72,10 +85,12 @@ const deletarDocumento = async (req, res) => {
 
         if (!doc) return res.status(404).json({ error: "Documento não encontrado." });
 
-        const filePath = path.resolve(doc.caminho);
+        const filePath = path.join(__dirname, "..", doc.caminho);
 
         if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
+        } else {
+            console.warn("Arquivo não existe fisicamente:", filePath);
         }
 
         await connection.execute(`DELETE FROM documentos WHERE id = ?`, [docId]);
@@ -85,7 +100,7 @@ const deletarDocumento = async (req, res) => {
         console.error("Erro ao deletar documento:", error);
         return res.status(500).json({ error: "Erro ao deletar documento" });
     }
-}
+};
 
 module.exports = {
     uploadDocumento,

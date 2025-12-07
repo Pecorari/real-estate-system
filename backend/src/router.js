@@ -6,6 +6,7 @@ const usuarioController = require('./controllers/usuarioController');
 const clienteController = require('./controllers/clienteController');
 const arquivoController = require('./controllers/arquivoController');
 const documentoController = require('./controllers/documentoController');
+const tipoDocumentoController = require('./controllers/tipoDocumentoController');
 const searchController = require('./controllers/searchController');
 const logController = require('./controllers/logController');
 
@@ -20,7 +21,7 @@ router.get('/auth/me', isAuth, authController.me);
 
 // Usuarios (admin only)
 router.get('/usuarios', isAuth, isAdmin, usuarioController.listarUsuarios);
-router.post('/usuarios', usuarioController.criarUsuario);
+router.post('/usuarios', isAuth, isAdmin, usuarioController.criarUsuario);
 router.put('/usuarios/:id', isAuth, isAdmin, usuarioController.atualizarUsuario);
 router.delete('/usuarios/:id', isAuth, isAdmin, usuarioController.deletarUsuario);
 
@@ -41,6 +42,12 @@ router.post('/arquivos/:id/documentos', upload.single('documento'), isAuth, docu
 router.get('/arquivos/:id/documentos', isAuth, documentoController.listarDocumentos);
 router.get('/arquivos/:id/documentos/:docId/download', isAuth, documentoController.downloadDocumento);
 router.delete('/arquivos/:id/documentos/:docId/delete', isAuth, documentoController.deletarDocumento);
+
+// Tipo de Documentos (admin only, less list)
+router.get('/tipo-doc', isAuth, tipoDocumentoController.listarTipoDocumentos);
+router.post('/tipo-doc', isAuth, isAdmin, tipoDocumentoController.criarTipoDocumento);
+router.put('/tipo-doc/:id', isAuth, isAdmin, tipoDocumentoController.atualizarTipoDocumento);
+router.delete('/tipo-doc/:id', isAuth, isAdmin, tipoDocumentoController.apagarTipoDocumento);
 
 // Pesquisa avançada
 router.get('/search/clientes', isAuth, searchController.searchClientes);
