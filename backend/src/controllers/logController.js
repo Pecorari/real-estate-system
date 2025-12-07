@@ -1,6 +1,6 @@
 const connection = require("../config/db_connection");
 
-const logController = async (req, res) => {
+const listarLogs = async (req, res) => {
   try {
     const { usuario_id, acao, entidade, entidade_id, data_ini, data_fim } = req.query;
 
@@ -15,16 +15,14 @@ const logController = async (req, res) => {
 
     const params = [];
 
-    // FILTROS
-
     if (usuario_id) {
       query += ` AND l.usuario_id = ?`;
       params.push(usuario_id);
     }
 
     if (acao) {
-      query += ` AND l.acao = ?`;
-      params.push(acao);
+      query += ` AND l.acao LIKE ?`;
+      params.push(`%${acao}%`);
     }
 
     if (entidade) {
@@ -39,12 +37,12 @@ const logController = async (req, res) => {
 
     if (data_ini) {
       query += ` AND l.created_at >= ?`;
-      params.push(data_ini);
+      params.push(data_ini + ' 00:00:00');
     }
 
     if (data_fim) {
       query += ` AND l.created_at <= ?`;
-      params.push(data_fim);
+      params.push(data_fim + ' 23:59:59');
     }
 
     query += ` ORDER BY l.created_at DESC`;
@@ -58,6 +56,17 @@ const logController = async (req, res) => {
   }
 };
 
+async function createLog({ usuario_id, acao, entidade, entidade_id, descricao }) {
+  try {
+    await connection.execute(`INSERT INTO logs (usuario_id, acao, entidade, entidade_id, descricao) VALUES (?, ?, ?, ?, ?)`,
+      [usuario_id, acao, entidade, entidade_id, descricao || null]
+    );
+  } catch (err) {
+    console.error("Erro ao registrar log:", err);
+  }
+}
+
 module.exports = {
-    logController
+    listarLogs,
+    createLog
 };

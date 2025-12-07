@@ -1,4 +1,27 @@
 const db = require("../config/db_connection");
+const { createLog } = require("./logController");
+
+async function getResumoClientes(req, res) {
+  try {
+    const [[totais]] = await db.execute(`
+      SELECT
+        COUNT(*) AS total,
+        SUM(CASE WHEN tipo = 'locador' OR tipo = 'ambos' THEN 1 ELSE 0 END) AS locadores,
+        SUM(CASE WHEN tipo = 'locatario' OR tipo = 'ambos' THEN 1 ELSE 0 END) AS locatarios
+      FROM clientes
+    `);
+
+    res.json({
+      total: totais.total || 0,
+      locadores: totais.locadores || 0,
+      locatarios: totais.locatarios || 0,
+    });
+  } catch (err) {
+    console.error("Erro ao buscar resumo de clientes:", err);
+    res.status(500).json({ error: "Erro ao buscar resumo" });
+  }
+};
+
 
 async function listarClientes(req, res) {
   try {
@@ -34,6 +57,14 @@ async function criarCliente(req, res) {
     const [result] = await db.query(`INSERT INTO clientes (nome, cpf_cnpj, tipo, observacoes) VALUES (?, ?, ?, ?)`,
       [nome, cpf_cnpj, tipo, observacoes || null]
     );
+
+    await createLog({
+      usuario_id: req.usuario.id,
+      acao: "Adicionado um cliente",
+      entidade: "cliente",
+      entidade_id: result.insertId,
+      descricao: `Cliente ${nome} criado`
+    });
 
     return res.status(201).json({ message: "Cliente criado com sucesso!",
       cliente: {
@@ -82,6 +113,14 @@ async function atualizarCliente(req, res) {
       ]
     );
 
+    await createLog({
+      usuario_id: req.usuario.id,
+      acao: "Editado um cliente",
+      entidade: "cliente",
+      entidade_id: id,
+      descricao: `Cliente atualizado: ${nome}`
+    });
+
     return res.json({ message: "Cliente atualizado com sucesso!" });
   } catch (error) {
     console.error("Erro atualizarCliente:", error);
@@ -98,9 +137,15 @@ async function deletarCliente(req, res) {
     if (existe.length === 0)
       return res.status(404).json({ error: "Cliente não encontrado." });
 
-    // Antes podemos verificar se o cliente tem arquivos associados e impedir exclusão caso necessário
-
     await db.query(`DELETE FROM clientes WHERE id = ?`, [id]);
+
+    await createLog({
+      usuario_id: req.usuario.id,
+      acao: "Removido um cliente",
+      entidade: "cliente",
+      entidade_id: id,
+      descricao: "Cliente removido"
+    });
 
     return res.json({ message: "Cliente removido com sucesso!" });
   } catch (error) {
@@ -110,6 +155,7 @@ async function deletarCliente(req, res) {
 }
 
 module.exports = {
+  getResumoClientes,
   listarClientes,
   criarCliente,
   atualizarCliente,

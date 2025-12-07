@@ -1,6 +1,7 @@
 const connection = require('../config/db_connection');
 const path = require('path');
 const fs = require('fs');
+const { createLog } = require("./logController");
 
 const uploadDocumento = async (req, res) => {
     try {
@@ -18,6 +19,14 @@ const uploadDocumento = async (req, res) => {
         const [result] = await connection.execute(`INSERT INTO documentos (arquivo_id, tipo_documento_id, nome_original, nome, caminho) VALUES (?, ?, ?, ?, ?)`,
             [arquivoId, tipo_documento_id, nomeOriginal, nomeArquivoSalvo, caminho]
         );
+
+        await createLog({
+            usuario_id: req.usuario.id,
+            acao: "Adicionado um documento",
+            entidade: "documento",
+            entidade_id: result.insertId,
+            descricao: `Adicionado um novo documento ${result.insertId}`
+        });
 
         return res.status(201).json({ message: "Documento enviado com sucesso!",
             documento_id: result.insertId,
@@ -61,6 +70,14 @@ const downloadDocumento = async (req, res) => {
             "Content-Disposition": `attachment; filename="${nomeSanitizado}"`,
             "X-File-Name": nomeSanitizado,
         });
+
+        await createLog({
+            usuario_id: req.usuario.id,
+            acao: "Feito download de um documento",
+            entidade: "documento",
+            entidade_id: docId,
+            descricao: `Download de um documento: ${docId}`
+        });
         
         return res.download(filePath, nomeSanitizado, (err) => {
             if (err) {
@@ -94,6 +111,14 @@ const deletarDocumento = async (req, res) => {
         }
 
         await connection.execute(`DELETE FROM documentos WHERE id = ?`, [docId]);
+
+        await createLog({
+            usuario_id: req.usuario.id,
+            acao: "Removido um documento",
+            entidade: "documento",
+            entidade_id: docId,
+            descricao: `Deletado um documento ${docId}`
+        });
 
         return res.status(200).json({ message: "Documento excluído com sucesso." });
     } catch (error) {

@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const db = require("../config/db_connection");
+const { createLog } = require("./logController");
 
 async function listarUsuarios(req, res) {
   try {
@@ -27,6 +28,14 @@ async function criarUsuario(req, res) {
     const senhaHash = await bcrypt.hash(senha, 10);
 
     const [result] = await db.query(`INSERT INTO usuarios (nome, email, senha, role) VALUES (?, ?, ?, ?)`, [nome, email, senhaHash, tipo]);
+
+    await createLog({
+      usuario_id: req.usuario.id,
+      acao: "Criado um usuario",
+      entidade: "usuario",
+      entidade_id: result.insertId,
+      descricao: `Usuario ${nome} criado`
+    });
 
     return res.status(201).json({ message: "Usuário criado com sucesso!",
       usuario: {
@@ -59,6 +68,14 @@ async function atualizarUsuario(req, res) {
 
     await db.query(`UPDATE usuarios SET nome = ?, email = ?, senha = ?, role = ? WHERE id = ?`,[nome, email, senhaHash, tipo, id]);
 
+    await createLog({
+      usuario_id: req.usuario.id,
+      acao: "Atualizado um usuario",
+      entidade: "usuario",
+      entidade_id: id,
+      descricao: `Usuario ${nome} atualizado`
+    });
+
     return res.json({ message: "Usuário atualizado com sucesso!" });
   } catch (error) {
     console.error("Erro atualizarUsuario:", error);
@@ -76,6 +93,14 @@ async function deletarUsuario(req, res) {
       return res.status(404).json({ error: "Usuário não encontrado." });
 
     await db.query(`DELETE FROM usuarios WHERE id = ?`, [id]);
+
+    await createLog({
+      usuario_id: req.usuario.id,
+      acao: "Removido um usuario",
+      entidade: "usuario",
+      entidade_id: id,
+      descricao: `Usuario ${id} removido`
+    });
 
     return res.json({ message: "Usuário removido com sucesso!" });
   } catch (error) {

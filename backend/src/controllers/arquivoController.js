@@ -1,6 +1,25 @@
 const db = require("../config/db_connection");
 const path = require('path');
 const fs = require('fs');
+const { createLog } = require("./logController");
+
+async function getResumoArquivos(req, res) {
+  try {
+    const [rows] = await db.execute(`
+      SELECT 
+        COUNT(*) AS total,
+        SUM(CASE WHEN status = 'ativo' THEN 1 ELSE 0 END) AS ativos,
+        SUM(CASE WHEN status = 'encerrado' THEN 1 ELSE 0 END) AS encerrados,
+        SUM(CASE WHEN status = 'inadimplente' THEN 1 ELSE 0 END) AS inadimplentes
+      FROM arquivos
+    `);
+
+    res.json(rows[0]);
+  } catch (error) {
+    console.error("Erro ao buscar resumo:", error);
+    res.status(500).json({ error: "Erro ao buscar resumo dos arquivos" });
+  }
+};
 
 async function listarArquivos(req, res) {
   try {
@@ -41,6 +60,14 @@ async function criarArquivo(req, res) {
         fs.mkdirSync(dir, { recursive: true });
     }
 
+    await createLog({
+      usuario_id: req.usuario.id,
+      acao: "Criado um arquivo",
+      entidade: "arquivo",
+      entidade_id: result.insertId,
+      descricao: `Arquivo ${result.insertId} criado`
+    });
+
     return res.json({ message: "Arquivo criado com sucesso!", id: result.insertId });
   } catch (error) {
     console.error("Erro ao criar arquivo:", error);
@@ -60,6 +87,14 @@ async function atualizarArquivo(req, res) {
     await db.query(`UPDATE arquivos SET cliente_locador_id=?, cliente_locatario_id=?, data_inicio=?, data_fim=?, status=?, observacoes=? WHERE id=?`,
       [cliente_locador_id, cliente_locatario_id, data_inicio, data_fim || null, status, observacoes || null, id]
     );
+
+    await createLog({
+      usuario_id: req.usuario.id,
+      acao: "Atualizado um arquivo",
+      entidade: "arquivo",
+      entidade_id: id,
+      descricao: `Arquivo ${id} atualizado`
+    });
 
     return res.json({ message: "Arquivo atualizado com sucesso!" });
   } catch (error) {
@@ -82,6 +117,14 @@ async function deletarArquivo(req, res) {
       fs.rmSync(dir, { recursive: true, force: true });
     }
 
+    await createLog({
+      usuario_id: req.usuario.id,
+      acao: "Removido um arquivo",
+      entidade: "arquivo",
+      entidade_id: id,
+      descricao: `Arquivo ${id} apagado`
+    });
+
     return res.json({ message: "Arquivo deletado com sucesso!" });
   } catch (error) {
     console.error("Erro ao deletar arquivo:", error);
@@ -90,6 +133,7 @@ async function deletarArquivo(req, res) {
 }
 
 module.exports = {
+  getResumoArquivos,
   listarArquivos,
   criarArquivo,
   atualizarArquivo,

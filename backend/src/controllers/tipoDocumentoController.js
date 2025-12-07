@@ -1,4 +1,5 @@
 const db = require('../config/db_connection');
+const { createLog } = require("./logController");
 
 async function listarTipoDocumentos(req, res) {
     try {
@@ -18,6 +19,14 @@ async function criarTipoDocumento(req, res) {
         if (!nome || nome.trim() === '') return res.status(400).json({ error: 'O campo "nome" é obrigatório.' });
 
         const [result] = await db.execute('INSERT INTO tipo_documentos (nome) VALUES (?)', [nome.trim()]);
+
+        await createLog({
+            usuario_id: req.usuario.id,
+            acao: "Criado um novo tipo de documento",
+            entidade: "tipo_documento",
+            entidade_id: result.insertId,
+            descricao: `Adicionado novo tipo de documento: ${nome}`
+        });
 
         return res.status(201).json({ id: result.insertId, nome: nome.trim() });
     } catch (err) {
@@ -41,6 +50,15 @@ async function atualizarTipoDocumento(req, res) {
             return res.status(404).json({ error: 'Tipo de documento não encontrado.' });
         }
 
+        await createLog({
+            usuario_id: req.usuario.id,
+            acao: "Atualizado um tipo de documento",
+            entidade: "tipo_documento",
+            entidade_id: id,
+            descricao: `Atualizado o tipo de documento: ${nome}`
+        });
+
+
         return res.json({ message: 'Tipo de documento atualizado com sucesso.' });
     } catch (err) {
         console.error(err);
@@ -59,6 +77,14 @@ async function apagarTipoDocumento(req, res) {
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: 'Tipo de documento não encontrado.' });
         }
+
+        await createLog({
+            usuario_id: req.usuario.id,
+            acao: "Removido um tipo de documento",
+            entidade: "tipo_documento",
+            entidade_id: id,
+            descricao: `Removido um tipo de documento: ${id}`
+        });
 
         return res.json({ message: 'Tipo de documento deletado com sucesso.' });
     } catch (err) {

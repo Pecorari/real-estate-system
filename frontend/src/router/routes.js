@@ -7,6 +7,7 @@ import Arquivos from "../pages/Arquivos/Arquivos";
 import DetalhesArquivo from "../pages/Arquivos/DetalhesArquivo/DetalhesArquivo";
 import Usuarios from "../pages/Usuarios/Usuarios";
 import TipoDocumento from "../pages/TipoDocumento/TipoDocumento";
+import AdminLogs from "../pages/AdminLogs/AdminLogs";
 
 import ProtectedRoute from "./ProtectedRoute";
 
@@ -22,6 +23,7 @@ export default function AppRoutes() {
         <Route path="/arquivos/:id" element={<ProtectedRoute><DetalhesArquivo /></ProtectedRoute>} />
         <Route path="/usuarios" element={<ProtectedRoute><Usuarios /></ProtectedRoute>} />
         <Route path="/tipo-documento" element={<ProtectedRoute><TipoDocumento /></ProtectedRoute>} />
+        <Route path="/logs" element={<ProtectedRoute><AdminLogs /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   );
