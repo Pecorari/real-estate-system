@@ -1,8 +1,6 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
-const cors = require('cors');
 const router = require('./router');
-
 require('dotenv').config();
 
 const app = express();
@@ -14,26 +12,33 @@ BigInt.prototype.toJSON = function () {
 const allowedOrigins = [
   "http://localhost:3000",
   "https://real-estate-system-pink.vercel.app",
+  "https://real-estate-system-i007fkk34-thiago-pecorari-clementes-projects.vercel.app",
   "https://0896651eda5c.ngrok-free.app"
 ];
 
-app.use(cors({
-  // origin: process.env.BASE_URL,
-  origin: function(origin, callback) {
-    if (!origin) return callback(null, true);
+// 🔥 Middleware CORS manual — substitui totalmente o cors()
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
 
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS: " + origin));
-    }
-  },
-  credentials: true,
-  exposedHeaders: ["X-File-Name", "Content-Disposition"]
-}));
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Expose-Headers", "X-File-Name, Content-Disposition");
+  
+  // Preflight
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+
+  next();
+});
 
 app.use(cookieParser());
 app.use(express.json());
-app.use('/api', router);
+app.use("/api", router);
 
 module.exports = app;
