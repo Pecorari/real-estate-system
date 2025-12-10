@@ -1,3 +1,5 @@
 node_modules
 .env
 src/uploads/
+firebase-key.json
+./config/firebase-key.json

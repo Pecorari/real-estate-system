@@ -26,6 +26,10 @@ export default function ArquivoDetalhe() {
   const [tiposDocumento, setTiposDocumento] = useState([]);
   const [modalDeletarDocumentoOpen, setModalDeletarDocumentoOpen] = useState(false);
   const [documentoSelecionado, setDocumentoSelecionado] = useState(null);
+  const [modalUploadOpen, setModalUploadOpen] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0); // opcional
 
   const capitalize = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
 
@@ -95,44 +99,44 @@ export default function ArquivoDetalhe() {
   };
 
   const handleUploadDocumento = async () => {
-    if (!uploadFile) return;
-    if (!tipoSelecionado) return;
+    if (!uploadFile || !tipoSelecionado) return;
 
     try {
+      setUploading(true);
+      setUploadProgress(0);
+      
       const formData = new FormData();
       formData.append("documento", uploadFile);
       formData.append("tipo_documento_id", tipoSelecionado);
 
       await api.post(`/arquivos/${id}/documentos`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percent = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            setUploadProgress(percent);
+          }
+        }
       });
 
       setUploadFile(null);
       setTipoSelecionado("");
+      setModalUploadOpen(false);
       carregarDocumentos();
     } catch (err) {
       console.error("Erro ao enviar documento:", err);
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
     }
   };
 
   const handleDownloadDocumento = async (docId) => {
     try {
-      const response = await api.get(`/arquivos/${id}/documentos/${docId}/download`, { responseType: "blob" });
-
-      const fileName = response.headers["x-file-name"];
-
-      const blob = new Blob([response.data], {
-        type: response.headers["content-type"] || "application/pdf",
-      });
-
-      const url = window.URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = fileName;
-
-      link.click();
-
+      const { data } = await api.get(`/arquivos/${id}/documentos/${docId}/download`);
+      window.open(data.url, "_blank");
     } catch (err) {
       console.error("Erro ao baixar documento:", err);
     }
@@ -151,12 +155,31 @@ export default function ArquivoDetalhe() {
     }
   };
 
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragging(true);
+  };
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragging(false);
+
+    const file = e.dataTransfer.files[0];
+    if (file) setUploadFile(file);
+  };
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragging(false);
+  };
+
   const documentoColumns = ["ID", "Tipo", "Nome", "Ações"];
 
   const documentoData = documentos.map((doc) => ({
     id: doc.id,
     tipo: doc.tipo_documento_id,
-    nome: doc.nome,
+    nome: doc.nome_original,
     acoes: (
       <div className="flex space-x-4">
         <FaFileDownload
@@ -190,43 +213,73 @@ export default function ArquivoDetalhe() {
 
         <div className="p-6 space-y-6 flex-1">
           <Card>
-            <div className="flex items-center justify-between mb-4">
-              <button
-                className="text-gray-600 hover:text-gray-800 font-bold flex items-center"
-                onClick={() => navigate("/arquivos")}
-              >
-                <FaArrowLeft className="mr-2" /> Voltar
-              </button>
+            <div className="mb-6">
+              <div className="flex items-center justify-between">
+                <button
+                  className="text-gray-600 hover:text-gray-800 font-bold flex items-center"
+                  onClick={() => navigate("/arquivos")}
+                >
+                  <FaArrowLeft className="mr-2" />
+                  Voltar
+                </button>
 
-              <h2 className="text-xl font-semibold">Detalhes do Arquivo #{arquivo.id}</h2>
-
-              <div className="flex space-x-4">
-                <FaEdit
-                  className="text-blue-600 hover:text-blue-800 cursor-pointer"
-                  size={25}
-                  title="Atualizar Arquivo"
-                  onClick={() => setModalAtualizarOpen(true)}
-                />
-                <FaTrash
-                  className="text-red-500 hover:text-red-600 cursor-pointer"
-                  size={25}
-                  title="Deletar Arquivo"
-                  onClick={() => setModalDeletarOpen(true)}
-                />
+                <div className="flex gap-4">
+                  <FaEdit
+                    className="text-blue-600 hover:text-blue-800 cursor-pointer"
+                    size={22}
+                    title="Atualizar Arquivo"
+                    onClick={() => setModalAtualizarOpen(true)}
+                  />
+                  <FaTrash
+                    className="text-red-500 hover:text-red-600 cursor-pointer"
+                    size={22}
+                    title="Deletar Arquivo"
+                    onClick={() => setModalDeletarOpen(true)}
+                  />
+                </div>
               </div>
+
+              <h2 className="mt-4 sm:mt-0 text-left sm:text-center text-lg sm:text-xl font-semibold ">
+                Detalhes do Arquivo #{arquivo.id}
+              </h2>
             </div>
 
-            <div className="flex flex-col md:flex-row mb-4 gap-6 mt-12">
-              <div className="flex-1 flex flex-col space-y-2">
-                <p><strong>Locador:</strong> {arquivo.locador_nome}</p>
-                <p><strong>Locatário:</strong> {arquivo.locatario_nome}</p>
-                <p><strong>Status:</strong> {capitalize(arquivo.status)}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8 text-sm sm:text-base">
+              
+              <div className="space-y-2">
+                <p>
+                  <strong>Locador:</strong>{" "}
+                  <span className="text-gray-700">{arquivo.locador_nome}</span>
+                </p>
+                <p>
+                  <strong>Locatário:</strong>{" "}
+                  <span className="text-gray-700">{arquivo.locatario_nome}</span>
+                </p>
+                <p>
+                  <strong>Status:</strong>{" "}
+                  <span className="text-gray-700">{capitalize(arquivo.status)}</span>
+                </p>
               </div>
 
-              <div className="flex-1 flex flex-col space-y-2">
-                <p><strong>Data Início:</strong> {formatarData(arquivo.data_inicio)}</p>
-                <p><strong>Data Fim:</strong> {formatarData(arquivo.data_fim) || "—"}</p>
-                <p><strong>Observações:</strong> {arquivo.observacoes || "—"}</p>
+              <div className="space-y-2">
+                <p>
+                  <strong>Data Início:</strong>{" "}
+                  <span className="text-gray-700">
+                    {formatarData(arquivo.data_inicio)}
+                  </span>
+                </p>
+                <p>
+                  <strong>Data Fim:</strong>{" "}
+                  <span className="text-gray-700">
+                    {formatarData(arquivo.data_fim) || "—"}
+                  </span>
+                </p>
+                <p className="break-words">
+                  <strong>Observações:</strong>{" "}
+                  <span className="text-gray-700">
+                    {arquivo.observacoes || "—"}
+                  </span>
+                </p>
               </div>
             </div>
           </Card>
@@ -234,24 +287,15 @@ export default function ArquivoDetalhe() {
           <Card>
             <h3 className="text-lg font-semibold mb-4">Documentos</h3>
 
-            <div className="flex items-center space-x-6 mb-4 w-1/3 m-auto">
-              <div className="w-full md:w-72">
-                <Select
-                  label="Tipo do Documento"
-                  value={tipoSelecionado}
-                  onChange={(e) => setTipoSelecionado(e.target.value)}
-                >
-                  <option value="">Selecione o tipo de Documento</option>
-
-                  {Array.isArray(tiposDocumento) && tiposDocumento.map((tipo) => (
-                    <option key={tipo.id} value={tipo.id}>{tipo.nome}</option>
-                  ))}
-                </Select>
-              </div>
-              <input className="flex-1" type="file" onChange={(e) => setUploadFile(e.target.files[0])} />
-              <Button onClick={handleUploadDocumento}><FaUpload />Enviar Documento</Button>
+            <div className="flex justify-end mb-4">
+              <Button
+                className="flex items-center gap-2"
+                onClick={() => setModalUploadOpen(true)}
+              >
+                <FaUpload />
+                Adicionar Documento
+              </Button>
             </div>
-
 
             <Table
               columns={documentoColumns}
@@ -259,6 +303,79 @@ export default function ArquivoDetalhe() {
             />
           </Card>
         </div>
+
+        <Modal isOpen={modalUploadOpen} onClose={() => !uploading && setModalUploadOpen(false)} title="Adicionar Documento">
+          <div className="space-y-4">
+
+            <Select label="Tipo do Documento" value={tipoSelecionado} onChange={(e) => setTipoSelecionado(e.target.value)}>
+              <option value="">Selecione o tipo de Documento</option>
+              {tiposDocumento.map((tipo) => (
+                <option key={tipo.id} value={tipo.id}>{tipo.nome}</option>
+              ))}
+            </Select>
+              <label
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                onDragLeave={handleDragLeave}
+                className={`
+                  flex flex-col items-center justify-center
+                  border-2 border-dashed rounded-lg
+                  p-6 cursor-pointer
+                  transition
+                  ${dragging ? "border-blue-600 bg-blue-100" : ""}
+                  ${uploadFile
+                    ? "border-green-500 bg-green-50 text-green-700"
+                    : "border-gray-300 hover:border-blue-500 hover:bg-blue-50"}
+                `}
+              >
+              <FaUpload className="text-2xl mb-2" />
+
+              <span className="text-sm text-center">
+                {uploadFile ? uploadFile.name : "Arraste o arquivo aqui ou clique para selecionar"}
+              </span>
+
+              <input
+                type="file"
+                className="hidden"
+                onChange={(e) => setUploadFile(e.target.files[0])}
+              />
+            </label>
+
+            {uploading && (
+              <div className="w-full bg-gray-200 rounded-full h-3 mt-2 overflow-hidden">
+                <div
+                  className="bg-blue-600 h-full transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            )}
+            {uploading && (
+              <p className="text-sm text-gray-600 text-center">
+                Enviando... {uploadProgress}%
+              </p>
+            )}
+
+            <div className="flex justify-end gap-2 pt-4">
+              <button
+                disabled={uploading}
+                className={`px-4 py-2 rounded transition ${
+                  uploading
+                    ? "bg-gray-300 cursor-not-allowed"
+                    : "bg-red-500 hover:bg-red-800 text-white"
+                }`}
+              >
+                Cancelar
+              </button>
+
+              <Button
+                disabled={!uploadFile || !tipoSelecionado || uploading}
+                onClick={handleUploadDocumento}
+              >
+                {uploading ? "Enviando..." : "Enviar Documento"}
+              </Button>
+            </div>
+          </div>
+        </Modal>
 
         <ModalArquivo
           open={modalAtualizarOpen}

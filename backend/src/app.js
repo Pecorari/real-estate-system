@@ -10,13 +10,9 @@ BigInt.prototype.toJSON = function () {
 };
 
 const allowedOrigins = [
-  "http://localhost:3000",
-  "https://real-estate-system-pink.vercel.app",
-  "https://real-estate-system-i007fkk34-thiago-pecorari-clementes-projects.vercel.app",
-  "https://0896651eda5c.ngrok-free.app"
+  "http://localhost:3000"
 ];
 
-// 🔥 Middleware CORS manual — substitui totalmente o cors()
 app.use((req, res, next) => {
   const origin = req.headers.origin;
 
@@ -29,7 +25,6 @@ app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.setHeader("Access-Control-Expose-Headers", "X-File-Name, Content-Disposition");
   
-  // Preflight
   if (req.method === "OPTIONS") {
     return res.sendStatus(200);
   }

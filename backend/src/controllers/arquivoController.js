@@ -1,6 +1,4 @@
 const db = require("../config/db_connection");
-const path = require('path');
-const fs = require('fs');
 const { createLog } = require("./logController");
 
 async function getResumoArquivos(req, res) {
@@ -55,11 +53,6 @@ async function criarArquivo(req, res) {
       [cliente_locador_id, cliente_locatario_id, data_inicio, data_fim || null, status, observacoes || null]
     );
 
-    const dir = path.join(__dirname, "..", "uploads", `arquivo_${result.insertId}`);
-    if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-    }
-
     await createLog({
       usuario_id: req.usuario.id,
       acao: "Criado um arquivo",
@@ -111,11 +104,6 @@ async function deletarArquivo(req, res) {
     if (!existe.length) return res.status(404).json({ error: "Arquivo não encontrado." });
 
     await db.query("DELETE FROM arquivos WHERE id = ?", [id]);
-
-    const dir = path.join(__dirname, "..", "uploads", `arquivo_${id}`);
-    if (fs.existsSync(dir)) {
-      fs.rmSync(dir, { recursive: true, force: true });
-    }
 
     await createLog({
       usuario_id: req.usuario.id,

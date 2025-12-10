@@ -75,9 +75,9 @@ const Dashboard = () => {
               </Card>
             </div>
 
-            <br /><hr /><hr /><hr /><br />
+            <hr /><hr /><hr /><br />
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-2 mb-10">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Card className="p-6 transform transition duration-300 hover:scale-101">
                 <h2 className="text-lg font-semibold">Total de Arquivos</h2>
                 <p className="text-2xl font-bold mt-2">{resumoArquivos.total}</p>
@@ -97,7 +97,7 @@ const Dashboard = () => {
               </Card>
             </div>
 
-            <div className="w-full flex justify-center mt-20">
+            <div className="w-full flex justify-center mt-10">
               <div className="w-full md:w-1/2 bg-white p-4 rounded-xl shadow">
                 <h2 className="text-lg font-semibold mb-10 text-center">Resumo dos Arquivos</h2>
 

@@ -143,22 +143,25 @@ export default function Clientes() {
 
         <div className="p-6 flex-1">
           <Card>
-            <div className="relative mb-4">
-              <h2 className="text-2xl font-bold text-center">Clientes</h2>
-              <div className="absolute right-0 top-0">
-                <Button onClick={abrirCriar}>+ Cadastrar Cliente</Button>
-              </div>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
+              <h2 className="text-2xl font-bold text-center sm:text-left">
+                Clientes
+              </h2>
+
+              <Button onClick={abrirCriar} className="w-auto">+ Cadastrar Cliente</Button>
             </div>
 
-            <div className="flex flex-col md:flex-row gap-4 mb-4 w-1/3">
-              <Input
-                label="Pesquisar"
-                placeholder="ID, Nome, CPF/CNPJ"
-                value={search}
-                onChange={(e) => handleInput(e.target.value)}
-              />
+            <div className="flex flex-col sm:flex-row gap-4 mb-6 w-full sm:w-auto max-w-3xl">
+              <div className="flex-1">
+                <Input
+                  label="Pesquisar"
+                  placeholder="ID, Nome, CPF/CNPJ"
+                  value={search}
+                  onChange={(e) => handleInput(e.target.value)}
+                />
+              </div>
 
-              <div className="w-full md:w-52">
+              <div className="w-full sm:w-52">
                 <Select
                   label="Tipo"
                   value={tipo}

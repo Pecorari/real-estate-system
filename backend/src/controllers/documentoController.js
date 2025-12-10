@@ -1,42 +1,50 @@
 const connection = require('../config/db_connection');
-const path = require('path');
-const fs = require('fs');
+const { bucket } = require("../config/firebase");
 const { createLog } = require("./logController");
+const path = require("path");
 
 const uploadDocumento = async (req, res) => {
-    try {
-        const arquivoId = req.params.id;
-        const { tipo_documento_id } = req.body;
+  try {
+    const arquivoId = req.params.id;
+    const { tipo_documento_id } = req.body;
 
-        if (!req.file) return res.status(400).json({ error: "Nenhum arquivo enviado." });
+    if (!req.file) return res.status(400).json({ error: "Nenhum arquivo enviado." });
+    if (!tipo_documento_id) return res.status(400).json({ error: "tipo_documento_id é obrigatório." });
 
-        const nomeArquivoSalvo = req.file.filename;
-        const nomeOriginal = req.file.originalname;
-        const caminho = path.relative(path.join(__dirname, ".."), req.file.path);
+    const [result] = await connection.execute(`INSERT INTO documentos (arquivo_id, tipo_documento_id, nome_original) VALUES (?, ?, ?)`,
+      [arquivoId, tipo_documento_id, req.file.originalname]
+    );
 
-        if (!tipo_documento_id) return res.status(400).json({ error: "tipo_documento_id é obrigatório." });
+    const documentoId = result.insertId;
 
-        const [result] = await connection.execute(`INSERT INTO documentos (arquivo_id, tipo_documento_id, nome_original, nome, caminho) VALUES (?, ?, ?, ?, ?)`,
-            [arquivoId, tipo_documento_id, nomeOriginal, nomeArquivoSalvo, caminho]
-        );
+    const ext = path.extname(req.file.originalname);
+    const base = path.basename(req.file.originalname, ext).replace(/[^\w.-]/g, "_");
+    const nomeArquivo = `${base}-${Date.now()}${ext}`;
 
-        await createLog({
-            usuario_id: req.usuario.id,
-            acao: "Adicionado um documento",
-            entidade: "documento",
-            entidade_id: result.insertId,
-            descricao: `Adicionado um novo documento ${result.insertId}`
-        });
+    const firebasePath = `arquivos/${arquivoId}/documentos/${documentoId}/${nomeArquivo}`;
 
-        return res.status(201).json({ message: "Documento enviado com sucesso!",
-            documento_id: result.insertId,
-            arquivo: nomeOriginal
-        });
-    } catch (error) {
-        console.error("Erro ao fazer upload do documento:", error);
-        return res.status(500).json({ error: "Erro ao fazer upload do documento" });
-    }
-}
+    await bucket.file(firebasePath).save(req.file.buffer, {
+      metadata: { contentType: req.file.mimetype }
+    });
+
+    await connection.execute(`UPDATE documentos SET nome = ?, caminho = ? WHERE id = ?`,
+      [nomeArquivo, firebasePath, documentoId]
+    );
+
+    await createLog({
+      usuario_id: req.usuario.id,
+      acao: "Adicionado um documento",
+      entidade: "documento",
+      entidade_id: documentoId,
+      descricao: `Documento ${documentoId} feito upload`
+    });
+
+    res.status(201).json({ message: "Documento enviado com sucesso!", documento_id: documentoId });
+  } catch (error) {
+    console.error("Erro no upload:", error);
+    res.status(500).json({ error: "Erro ao fazer upload do documento" });
+  }
+};
 
 const listarDocumentos = async (req, res) => {
     try {
@@ -59,16 +67,11 @@ const downloadDocumento = async (req, res) => {
         
         if (!doc) return res.status(404).json({ error: "Documento não encontrado." });
         
-        const filePath = path.join(__dirname, "..", doc.caminho);
-        
-        if (!fs.existsSync(filePath)) return res.status(404).json({ error: "Arquivo físico não encontrado no servidor." });
-        
-        const nomeSanitizado = doc.nome_original?.replace(/[^\w.\-() ]+/g, "") || "arquivo.pdf";
+        const file = bucket.file(doc.caminho);
 
-        res.set({
-            "Content-Type": "application/pdf",
-            "Content-Disposition": `attachment; filename="${nomeSanitizado}"`,
-            "X-File-Name": nomeSanitizado,
+        const [url] = await file.getSignedUrl({
+            action: "read",
+            expires: Date.now() + 1000 * 60 * 10
         });
 
         await createLog({
@@ -79,12 +82,7 @@ const downloadDocumento = async (req, res) => {
             descricao: `Download de um documento: ${docId}`
         });
         
-        return res.download(filePath, nomeSanitizado, (err) => {
-            if (err) {
-                console.error("Erro ao enviar arquivo:", err);
-                return res.status(500).json({ error: "Erro ao enviar arquivo" });
-            }
-        });
+        return res.json({ url });
     } catch (error) {
         console.error("Erro ao fazer download do documento:", error);
         return res.status(500).json({ error: "Erro ao fazer download do documento" });
@@ -102,13 +100,7 @@ const deletarDocumento = async (req, res) => {
 
         if (!doc) return res.status(404).json({ error: "Documento não encontrado." });
 
-        const filePath = path.join(__dirname, "..", doc.caminho);
-
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-        } else {
-            console.warn("Arquivo não existe fisicamente:", filePath);
-        }
+        await bucket.file(doc.caminho).delete();
 
         await connection.execute(`DELETE FROM documentos WHERE id = ?`, [docId]);
 
@@ -117,7 +109,7 @@ const deletarDocumento = async (req, res) => {
             acao: "Removido um documento",
             entidade: "documento",
             entidade_id: docId,
-            descricao: `Deletado um documento ${docId}`
+            descricao: `Deletado um documento: ${docId}`
         });
 
         return res.status(200).json({ message: "Documento excluído com sucesso." });

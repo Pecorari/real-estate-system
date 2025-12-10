@@ -66,20 +66,20 @@ const AdminLogs = () => {
           <div className="bg-white p-4 rounded-lg shadow">
             <h1 className="text-2xl font-bold mb-4">Logs do Sistema</h1>
 
-            <div className="flex flex-col md:flex-row gap-4 mb-4">
+            <div className="flex flex-wrap mb-4">
               <Input
                 name="usuario_id"
                 value={filtros.usuario_id}
                 onChange={handleFiltro}
                 placeholder="ID do Usuário"
-                className="p-2 rounded bg-gray-700 text-white flex-1"
+                className="p-2 rounded bg-gray-700 text-white w-full sm:w-[48%] lg:w-[23%]"
               />
 
               <Select
                 name="acao"
                 value={filtros.acao}
                 onChange={handleFiltro}
-                className="p-2 rounded bg-gray-700 text-white flex-1"
+                className="p-2 rounded bg-gray-700 text-white w-full sm:w-[48%] lg:w-[23%]"
               >
                 <option value="">Ação</option>
                 <option value="criação">Criação</option>
@@ -92,7 +92,7 @@ const AdminLogs = () => {
                 name="entidade"
                 value={filtros.entidade}
                 onChange={handleFiltro}
-                className="p-2 rounded bg-gray-700 text-white flex-1"
+                className="p-2 rounded bg-gray-700 text-white w-full sm:w-[48%] lg:w-[23%]"
               >
                 <option value="">Entidade</option>
                 <option value="cliente">Cliente</option>
@@ -106,7 +106,7 @@ const AdminLogs = () => {
                 value={filtros.entidade_id}
                 onChange={handleFiltro}
                 placeholder="ID da Entidade"
-                className="p-2 rounded bg-gray-700 text-white flex-1"
+                className="p-2 rounded bg-gray-700 text-white w-full sm:w-[48%] lg:w-[23%]"
               />
 
               <Input
@@ -114,7 +114,7 @@ const AdminLogs = () => {
                 name="data_ini"
                 value={filtros.data_ini}
                 onChange={handleFiltro}
-                className="p-2 rounded bg-gray-700 text-white flex-1"
+                className="p-2 rounded bg-gray-700 text-white w-full sm:w-[48%] lg:w-[23%]"
               />
 
               <Input
@@ -122,10 +122,10 @@ const AdminLogs = () => {
                 name="data_fim"
                 value={filtros.data_fim}
                 onChange={handleFiltro}
-                className="p-2 rounded bg-gray-700 text-white flex-1"
+                className="p-2 rounded bg-gray-700 text-white w-full sm:w-[48%] lg:w-[23%]"
               />
 
-              <Button onClick={aplicarFiltros}>Aplicar Filtros</Button>
+              <Button className="self-end" onClick={aplicarFiltros}>Aplicar Filtros</Button>
             </div>
 
             {loading ? (

@@ -106,10 +106,9 @@ export default function Usuarios() {
 
         <main className="p-6 flex-1">
           <Card>
-            <div className="flex justify-between items-center mb-4">
-              <h1 className="text-2xl font-bold">Usuários</h1>
-
-              <Button onClick={abrirCriar}>+ Novo Usuário</Button>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <h1 className="text-2xl font-bold text-center sm:text-left">Usuários</h1>
+              <Button onClick={abrirCriar} className="w-auto">+ Novo Usuário</Button>
             </div>
 
             {loading ? (

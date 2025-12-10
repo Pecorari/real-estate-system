@@ -80,13 +80,13 @@ export default function TipoDocumento() {
     return (
         <div className="flex min-h-screen bg-gray-100">
             <Sidebar />
-            <div className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col overflow-auto">
                 <Navbar />
-                <main className="p-6 flex-1 overflow-auto">
+                <main className="p-6 flex-1">
                     <Card>
-                        <div className="flex justify-between items-center mb-4">
-                            <h1 className="text-2xl font-bold">Tipos de Documento</h1>
-                            <Button onClick={abrirCriar}>+ Novo Tipo</Button>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                            <h1 className="text-2xl font-bold text-center sm:text-left">Tipos de Documento</h1>
+                            <Button onClick={abrirCriar} className="w-auto">+ Novo Tipo</Button>
                         </div>
 
                         {loading ? (

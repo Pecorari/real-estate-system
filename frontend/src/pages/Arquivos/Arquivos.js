@@ -83,22 +83,27 @@ export default function Arquivos() {
 
         <div className="p-6 flex-1">
           <Card>
-            <div className="relative mb-4">
-              <h2 className="text-2xl font-bold text-center">Arquivos</h2>
-               <div className="absolute right-0 top-0">
-                  <Button onClick={() => setModalOpen(true)}>+ Adicionar Arquivo</Button>
-               </div>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <h2 className="text-2xl font-bold text-center sm:text-left">Arquivos</h2>
+              <Button onClick={() => setModalOpen(true)} className="w-auto">+ Adicionar Arquivo</Button>
             </div>
 
-            <div className="flex flex-col md:flex-row w-1/3 gap-4 mb-4 mt-6">
-              <Input
-                label="Pesquisar"
-                placeholder="Pesquisar arquivos..."
-                value={busca}
-                onChange={(e) => handleInput(e.target.value)}
-              />
-              <div className="w-full md:w-52">
-                <Select label="Status" value={status} onChange={(e) => handleStatus(e.target.value)}>
+            <div className="flex flex-col sm:flex-row gap-4 mb-6 w-full sm:w-auto max-w-3xl">
+              <div className="flex-1">
+                <Input
+                  label="Pesquisar"
+                  placeholder="Pesquisar arquivos..."
+                  value={busca}
+                  onChange={(e) => handleInput(e.target.value)}
+                />
+              </div>
+
+              <div className="w-full sm:w-52">
+                <Select
+                  label="Status"
+                  value={status}
+                  onChange={(e) => handleStatus(e.target.value)}
+                >
                   <option value="">— Todos —</option>
                   <option value="ativo">Ativo</option>
                   <option value="encerrado">Encerrado</option>
