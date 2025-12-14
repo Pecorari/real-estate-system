@@ -100,9 +100,9 @@ const deletarDocumento = async (req, res) => {
 
         if (!doc) return res.status(404).json({ error: "Documento não encontrado." });
 
-        await bucket.file(doc.caminho).delete();
-
         await connection.execute(`DELETE FROM documentos WHERE id = ?`, [docId]);
+
+        await bucket.file(doc.caminho).delete();
 
         await createLog({
             usuario_id: req.usuario.id,

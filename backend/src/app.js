@@ -10,7 +10,10 @@ BigInt.prototype.toJSON = function () {
 };
 
 const allowedOrigins = [
-  "http://localhost:3000"
+  "http://localhost:3000",
+  "https://thiagopecorariclemen1765331954009.0772072.meusitehostgator.com.br",
+  "https://real-estate-system-pink.vercel.app/",
+  "https://real-estate-system-3988fqou3-thiago-pecorari-clementes-projects.vercel.app"
 ];
 
 app.use((req, res, next) => {
