@@ -69,7 +69,7 @@ export default function Sidebar() {
 
           <hr />
 
-          {user.role === "admin" &&
+          {user?.role === "admin" &&
             adminLinks.map((link) => (
               <Link
                 key={link.path}

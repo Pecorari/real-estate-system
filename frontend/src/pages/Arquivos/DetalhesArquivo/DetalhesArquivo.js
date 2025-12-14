@@ -363,6 +363,7 @@ export default function ArquivoDetalhe() {
                     ? "bg-gray-300 cursor-not-allowed"
                     : "bg-red-500 hover:bg-red-800 text-white"
                 }`}
+                onClick={() => setModalUploadOpen(false)}
               >
                 Cancelar
               </button>

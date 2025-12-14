@@ -24,6 +24,8 @@ async function isAuth(req, res, next) {
 
 async function isAdmin(req, res, next) {
   try {
+    if (!req.usuario) return res.status(401).json({ error: "Não autenticado." });
+    
     if (!req.usuario || req.usuario.role !== "admin") return res.status(403).json({ error: "Acesso permitido somente para administradores." });
     
     next()

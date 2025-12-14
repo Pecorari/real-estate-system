@@ -9,6 +9,7 @@ import { useAuth } from "../../context/authContext";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", senha: "" });
+  const [submitting, setSubmitting] = useState(false);
   const { login, error, setError, user } = useAuth();
   const navigate = useNavigate();
 
@@ -24,12 +25,14 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
 
     const res = await login(form.email, form.senha);
     
     if (res.ok) {
       navigate("/dashboard");
     }
+    setSubmitting(false);
   };
 
   return (
@@ -68,7 +71,7 @@ export default function Login() {
                 />
 
               <div className="mt-5 flex justify-end">
-                <Button type="submit">Entrar</Button>
+                <Button type="submit" disabled={submitting}>Entrar</Button>
               </div>
             </form>
           </Card>

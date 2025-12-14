@@ -20,11 +20,13 @@ async function login(req, res) {
 
       const token = jwt.sign({ id: usuario.id, nome: usuario.nome, role: usuario.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
+      const isProduction = process.env.NODE_ENV === "production";
+
       res.cookie("token", token, {
-          httpOnly: true,
-          secure: true, // colocar true em produção com HTTPS
-          sameSite: "none",
-          maxAge: 24 * 60 * 60 * 1000 
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
+        maxAge: 24 * 60 * 60 * 1000
       });
 
       return res.json({ message: "Login realizado com sucesso!", usuario: {
@@ -41,11 +43,19 @@ async function login(req, res) {
 
 async function logout(_req, res) {
   try {
-    res.clearCookie("token");
+    const isProduction = process.env.NODE_ENV === "production";
+
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      path: "/",
+    });
+
     return res.json({ message: "Logout realizado com sucesso!" });
   } catch (error) {
     console.error("Erro logout:", error);
-    res.status(500).json({ error: "Erro interno no servidor." });
+    return res.status(500).json({ error: "Erro interno no servidor." });
   }
 }
 

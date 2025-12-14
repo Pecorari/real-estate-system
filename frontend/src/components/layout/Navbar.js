@@ -8,7 +8,7 @@ export default function Navbar() {
       <h1 className="text-lg font-semibold truncate hidden lg:block">SISTEMA DE CONTROLE DE ARQUIVOS </h1>
 
       <div className="flex items-center gap-4">
-        <p className="hidden xs:block">Olá, <span className="font-medium">{user.nome}</span></p>
+        {user && <p className="hidden xs:block">Olá, <span className="font-medium">{user.nome}</span></p>}
         <button
           className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-800 transition"
           onClick={() => logout()}

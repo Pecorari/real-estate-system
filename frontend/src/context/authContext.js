@@ -12,7 +12,8 @@ export function AuthProvider({ children }) {
     try {
       const res = await api.get("/auth/me");
       setUser(res.data.usuario);
-    } catch {
+    } catch(err) {
+      if (err.response?.status !== 401) console.error("Erro ao carregar sessão", err);
       setUser(null);
     } finally {
       setLoading(false);
@@ -40,8 +41,11 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     try {
       await api.post("/auth/logout");
-    } catch {}
-
+    } catch (err) {
+      setError(err.response?.data?.error || "Erro ao fazer logout");
+      return { message: "Erro ao fazer logout" }
+    }
+    
     setUser(null);
   };
 
