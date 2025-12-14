@@ -14,27 +14,38 @@ import api from "../../hooks/useApi";
 export default function Clientes() {
   const [clientes, setClientes] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const [search, setSearch] = useState("");
   const [tipo, setTipo] = useState("");
-
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 10;
   const [modalOpen, setModalOpen] = useState(false);
   const [modalDeleteOpen, setModalDeleteOpen] = useState(false);
-
   const [form, setForm] = useState({
     nome: "",
     cpf_cnpj: "",
     tipo: "locador",
     observacoes: ""
   });
-
   const [editId, setEditId] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
+  const [erro, setErro] = useState("");
 
-  const carregarClientes = async () => {
+  const carregarClientes = async (pageAtual = page) => {
+    setLoading(true);
+
     try {
-      const { data } = await api.get("/clientes");
-      setClientes(data);
+      const { data } = await api.get("/clientes", {
+        params: {
+          page: pageAtual,
+          limit,
+          q: search || undefined,
+          tipo: tipo || undefined
+        }
+      });
+
+      setClientes(data.data);
+      setTotalPages(data.pagination.totalPages);
     } catch (err) {
       console.log("Erro ao carregar clientes:", err);
     } finally {
@@ -43,8 +54,14 @@ export default function Clientes() {
   };
 
   useEffect(() => {
-    carregarClientes();
-  }, []);
+    carregarClientes(1);
+    setPage(1);
+    // eslint-disable-next-line
+  }, [search, tipo]);
+  useEffect(() => {
+    carregarClientes(page);
+    // eslint-disable-next-line
+  }, [page]);
 
   const abrirCriar = () => {
     setEditId(null);
@@ -89,50 +106,27 @@ export default function Clientes() {
       carregarClientes();
     } catch (err) {
       console.log("Erro ao deletar cliente:", err);
-    }
-  };
-
-  const pesquisarClientes = async (valorBusca = search, tipoBusca = tipo) => {
-    try {
-      const { data } = await api.get("/search/clientes", {
-        params: {
-          q: valorBusca.trim() !== "" ? valorBusca.trim() : undefined,
-          tipo: tipoBusca !== "" ? tipoBusca : undefined
-        },
-      });
-
-      setClientes(data);
-    } catch (err) {
-      console.log("Erro ao pesquisar clientes:", err);
+      setErro(err?.response?.data?.error);
     }
   };
 
   const handleInput = (valor) => {
     setSearch(valor);
-
-    if (valor.trim() === "" && tipo === "") {
-      carregarClientes();
-      return;
-    }
-
-    pesquisarClientes(valor, tipo);
   };
 
   const handleTipo = (valor) => {
     setTipo(valor);
-    pesquisarClientes(search, valor);
   };
-
 
   // Debounce para evitar flood de requisições
   useEffect(() => {
     const timer = setTimeout(() => {
-      pesquisarClientes(search);
+      carregarClientes(1);
     }, 400);
 
     return () => clearTimeout(timer);
-  // eslint-disable-next-line
-  }, []);
+    // eslint-disable-next-line
+  }, [search]);
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -178,36 +172,58 @@ export default function Clientes() {
             {loading ? (
               <p>Carregando...</p>
             ) : (
-              <Table
-                columns={["ID", "Nome", "CPF/CNPJ", "Tipo", "Observações", "Ações"]}
-                data={clientes.map((c) => ({
-                  id: c.id,
-                  nome: c.nome,
-                  cpf_cnpj: c.cpf_cnpj,
-                  tipo: c.tipo,
-                  observacoes: c.observacoes,
-                  ações: (
-                    <div className="flex gap-2">
-                      <button
-                        className="text-blue-600 hover:underline"
-                        onClick={() => abrirEditar(c)}
-                      >
-                        Editar
-                      </button>
+              <>
+                <Table columns={["ID", "Nome", "CPF/CNPJ", "Tipo", "Observações", "Ações"]}
+                  data={clientes.map((c) => ({
+                    id: c.id,
+                    nome: c.nome,
+                    cpf_cnpj: c.cpf_cnpj,
+                    tipo: c.tipo,
+                    observacoes: c.observacoes,
+                    ações: (
+                      <div className="flex gap-2">
+                        <button
+                          className="text-blue-600 hover:underline"
+                          onClick={() => abrirEditar(c)}
+                        >
+                          Editar
+                        </button>
 
-                      <button
-                        className="text-red-600 hover:underline"
-                        onClick={() => {
-                          setDeleteId(c.id);
-                          setModalDeleteOpen(true);
-                        }}
-                      >
-                        Deletar
-                      </button>
-                    </div>
-                  ),
-                }))}
-              />
+                        <button
+                          className="text-red-600 hover:underline"
+                          onClick={() => {
+                            setDeleteId(c.id);
+                            setModalDeleteOpen(true);
+                          }}
+                        >
+                          Deletar
+                        </button>
+                      </div>
+                    ),
+                  }))}
+                />
+                <div className="flex justify-center items-center gap-3 mt-4">
+                  <button
+                    disabled={page === 1}
+                    onClick={() => setPage(p => Math.max(p - 1, 1))}
+                    className="bg-blue-600 hover:bg-blue-800 text-white rounded px-4 py-2 text-xs"
+                  >
+                    Anterior
+                  </button>
+
+                  <span className="text-sm text-gray-600">
+                    Página {page} de {totalPages}
+                  </span>
+
+                  <button
+                    disabled={page === totalPages}
+                    onClick={() => setPage(p => Math.min(p + 1, totalPages))}
+                    className="bg-blue-600 hover:bg-blue-800 text-white rounded px-4 py-2 text-xs"
+                  >
+                    Próxima
+                  </button>
+                </div>
+              </>
             )}
           </Card>
         </div>
@@ -261,11 +277,11 @@ export default function Clientes() {
       <Modal isOpen={modalDeleteOpen} onClose={() => setModalDeleteOpen(false)}>
         <h2 className="text-lg font-semibold mb-3">Excluir cliente?</h2>
         <p>Essa ação não poderá ser desfeita.</p>
-
+        {erro ? <span className="text-red-600 text-sm">{erro}</span> : <></>}
         <div className="flex gap-2 mt-4">
           <Button
             className="bg-gray-400 hover:bg-gray-500"
-            onClick={() => setModalDeleteOpen(false)}
+            onClick={() => {setModalDeleteOpen(false); setErro("")}}
           >
             Cancelar
           </Button>

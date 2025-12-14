@@ -16,16 +16,29 @@ export default function Arquivos() {
   const [arquivos, setArquivos] = useState([]);
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
-  const [busca, setBusca] = useState("");
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 10;
+
   const navigate = useNavigate();
 
-  const carregarArquivos = async () => {
+  const carregarArquivos = async (pageAtual = page) => {
     try {
       setLoading(true);
-      const { data } = await api.get("/arquivos");
-      setArquivos(data);
+
+      const { data } = await api.get("/arquivos", {
+        params: {
+          page: pageAtual,
+          limit,
+          q: search || undefined,
+          status: status || undefined,
+        },
+      });
+
+      setArquivos(data.data);
+      setTotalPages(data.pagination.totalPages);
     } catch (err) {
       console.error("Erro ao carregar arquivos:", err);
     } finally {
@@ -33,46 +46,24 @@ export default function Arquivos() {
     }
   };
 
-  const pesquisar = async (valorBusca = "", statusBusca = "") => {
-    setBusca(valorBusca);
-
-    if (!valorBusca.trim() && !statusBusca) {
-      carregarArquivos();
-      return;
-    }
-
-    try {
-      const { data } = await api.get("/search/arquivos", {
-        params: {
-          q: valorBusca.trim() !== "" ? valorBusca.trim() : undefined,
-          status: statusBusca !== "" ? statusBusca : undefined
-        },
-      });
-      setArquivos(data);
-    } catch (err) {
-      console.error("Erro ao pesquisar arquivos:", err);
-    }
-  };
-
-  const handleInput = (valor) => {
-    setSearch(valor);
-
-    if (valor.trim() === "" && status === "") {
-      carregarArquivos();
-      return;
-    }
-
-    pesquisar(valor, status);
-  };
-
   const handleStatus = (valor) => {
     setStatus(valor);
-    pesquisar(search, valor);
   };
 
   useEffect(() => {
-    carregarArquivos();
-  }, []);
+    carregarArquivos(page);
+    // eslint-disable-next-line
+  }, [page]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      carregarArquivos(1);
+      setPage(1);
+    }, 400);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line
+  }, [search, status]);
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -93,8 +84,8 @@ export default function Arquivos() {
                 <Input
                   label="Pesquisar"
                   placeholder="Pesquisar arquivos..."
-                  value={busca}
-                  onChange={(e) => handleInput(e.target.value)}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
 
@@ -115,17 +106,40 @@ export default function Arquivos() {
             {loading ? (
               <p className="text-gray-600">Carregando...</p>
             ) : (
-              <Table
-                columns={["ID", "Locador", "Locatário", "Status", ""]}
-                data={arquivos.map((arq) => ({
-                  id: arq.id,
-                  locador: arq.locador_nome,
-                  locatario: arq.locatario_nome,
-                  status: arq.status || "—",
-                  detalhe: <span className="text-lg text-gray-500 hover:text-blue-700 transition-colors"><FaLongArrowAltRight /></span>
-                }))}
-                onRowClick={(row) => navigate(`/arquivos/${row.id}`)}
-              />
+              <>
+                <Table
+                  columns={["ID", "Locador", "Locatário", "Status", ""]}
+                  data={arquivos.map((arq) => ({
+                    id: arq.id,
+                    locador: arq.locador_nome,
+                    locatario: arq.locatario_nome,
+                    status: arq.status || "—",
+                    detalhe: <span className="text-lg text-gray-500 hover:text-blue-700 transition-colors"><FaLongArrowAltRight /></span>
+                  }))}
+                  onRowClick={(row) => navigate(`/arquivos/${row.id}`)}
+                />
+                <div className="flex justify_tables pagination items-center gap-4 mt-4 justify-center">
+                  <button
+                    disabled={page === 1}
+                    onClick={() => setPage(p => Math.max(p - 1, 1))}
+                    className="bg-blue-600 hover:bg-blue-800 text-white rounded px-4 py-2 text-xs"
+                  >
+                    Anterior
+                  </button>
+
+                  <span className="text-sm">
+                    Página {page} de {totalPages}
+                  </span>
+
+                  <button
+                    disabled={page === totalPages}
+                    onClick={() => setPage(p => Math.min(p + 1, totalPages))}
+                    className="bg-blue-600 hover:bg-blue-800 text-white rounded px-4 py-2 text-xs"
+                  >
+                    Próxima
+                  </button>
+                </div>
+              </>
             )}
           </Card>
         </div>

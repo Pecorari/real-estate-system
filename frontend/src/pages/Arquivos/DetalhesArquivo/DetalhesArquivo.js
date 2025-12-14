@@ -59,9 +59,8 @@ export default function ArquivoDetalhe() {
   const carregarArquivo = async () => {
     try {
       setLoading(true);
-      const { data } = await api.get(`/arquivos`);
-      const arquivoSelecionado = data.find((a) => a.id === Number(id));
-      setArquivo(arquivoSelecionado);
+      const { data } = await api.get(`/arquivos/${id}`);
+      setArquivo(data);
     } catch (err) {
       console.error("Erro ao carregar arquivo:", err);
     } finally {

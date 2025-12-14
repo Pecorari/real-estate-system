@@ -11,7 +11,6 @@ import api from "../../hooks/useApi";
 const AdminLogs = () => {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const [filtros, setFiltros] = useState({
     usuario_id: "",
     acao: "",
@@ -20,13 +19,22 @@ const AdminLogs = () => {
     data_ini: "",
     data_fim: ""
   });
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 15;
 
-  const getLogs = async () => {
+  const getLogs = async (pageAtual = page) => {
     try {
       setLoading(true);
-      const response = await api.get("/logs", { params: filtros });
+      const response = await api.get("/logs", {
+        params: {
+          ...filtros,
+          page: pageAtual,
+          limit
+        }
+      });
 
-      const formatados = response.data.map((log) => ({
+      const formatados = response.data.data.map((log) => ({
         data: new Date(log.created_at).toLocaleString("pt-BR"),
         id: log.id,
         usuario: log.usuario_nome,
@@ -37,6 +45,7 @@ const AdminLogs = () => {
       }));
 
       setLogs(formatados);
+      setTotalPages(response.data.pagination.totalPages);
     } catch (err) {
       console.error("Erro ao buscar logs:", err);
     } finally {
@@ -45,15 +54,18 @@ const AdminLogs = () => {
   };
   
   useEffect(() => {
-      getLogs();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    getLogs(page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
   const handleFiltro = (e) => {
     setFiltros({ ...filtros, [e.target.name]: e.target.value });
   };
 
-  const aplicarFiltros = () => getLogs();
+  const aplicarFiltros = () => {
+    if (page !== 1) setPage(1);
+    else getLogs(1);
+  };
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -133,18 +145,41 @@ const AdminLogs = () => {
             ) : logs.length === 0 ? (
                 <p className="text-gray-500">Nenhum log encontrado.</p>
             ) : (
-              <TableHistorico
-                columns={[
-                  "Data",
-                  "ID",
-                  "Usuário",
-                  "Ação",
-                  "Entidade",
-                  "Entidade ID",
-                  "Descrição",
-                ]}
-                data={logs}
-              />
+              <>
+                <TableHistorico
+                  columns={[
+                    "Data",
+                    "ID",
+                    "Usuário",
+                    "Ação",
+                    "Entidade",
+                    "Entidade ID",
+                    "Descrição",
+                  ]}
+                  data={logs}
+                />
+                <div className="flex items-center justify-center gap-4 mt-4">
+                  <button
+                    disabled={page === 1}
+                    onClick={() => setPage(p => Math.max(p - 1, 1))}
+                    className="bg-blue-600 hover:bg-blue-800 text-white rounded px-4 py-2 text-xs disabled:opacity-50"
+                  >
+                    Anterior
+                  </button>
+
+                  <span className="text-sm">
+                    Página {page} de {totalPages}
+                  </span>
+
+                  <button
+                    disabled={page === totalPages}
+                    onClick={() => setPage(p => Math.min(p + 1, totalPages))}
+                    className="bg-blue-600 hover:bg-blue-800 text-white rounded px-4 py-2 text-xs disabled:opacity-50"
+                  >
+                    Próxima
+                  </button>
+                </div>
+              </>
             )}
           </div>
         </div>

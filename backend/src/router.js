@@ -7,7 +7,6 @@ const clienteController = require('./controllers/clienteController');
 const arquivoController = require('./controllers/arquivoController');
 const documentoController = require('./controllers/documentoController');
 const tipoDocumentoController = require('./controllers/tipoDocumentoController');
-const searchController = require('./controllers/searchController');
 const logController = require('./controllers/logController');
 
 const { isAuth, isAdmin } = require('./middlewares/authMiddleware');
@@ -35,6 +34,7 @@ router.delete('/clientes/:id', isAuth, clienteController.deletarCliente);
 // Arquivos
 router.get('/arquivos/resumo', isAuth, arquivoController.getResumoArquivos);
 router.get('/arquivos', isAuth, arquivoController.listarArquivos);
+router.get('/arquivos/:id', isAuth, arquivoController.detalharArquivo);
 router.post('/arquivos', isAuth, arquivoController.criarArquivo);
 router.put('/arquivos/:id', isAuth, arquivoController.atualizarArquivo);
 router.delete('/arquivos/:id', isAuth, arquivoController.deletarArquivo);
@@ -50,10 +50,6 @@ router.get('/tipo-doc', isAuth, tipoDocumentoController.listarTipoDocumentos);
 router.post('/tipo-doc', isAuth, isAdmin, tipoDocumentoController.criarTipoDocumento);
 router.put('/tipo-doc/:id', isAuth, isAdmin, tipoDocumentoController.atualizarTipoDocumento);
 router.delete('/tipo-doc/:id', isAuth, isAdmin, tipoDocumentoController.apagarTipoDocumento);
-
-// Pesquisa avançada
-router.get('/search/clientes', isAuth, searchController.searchClientes);
-router.get('/search/arquivos', isAuth, searchController.searchArquivos);
 
 // Logs
 router.get('/logs', logController.listarLogs);

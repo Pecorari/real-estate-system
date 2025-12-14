@@ -22,12 +22,54 @@ async function getResumoClientes(req, res) {
   }
 };
 
-
 async function listarClientes(req, res) {
   try {
-    const [rows] = await db.query(`SELECT id, nome, cpf_cnpj, tipo, observacoes, created_at, updated_at FROM clientes ORDER BY id DESC`);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
 
-    return res.json(rows);
+    const { q, tipo } = req.query;
+
+    let where = "WHERE 1=1";
+    const params = [];
+
+    if (q) {
+      where += " AND (id LIKE ? OR nome LIKE ? OR cpf_cnpj LIKE ?)";
+      params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+    }
+
+    if (tipo) {
+      where += " AND tipo = ?";
+      params.push(tipo);
+    }
+
+    // total de registros
+    const [[{ total }]] = await db.query(
+      `SELECT COUNT(*) as total FROM clientes ${where}`,
+      params
+    );
+
+    // dados paginados
+    const [rows] = await db.query(
+      `
+      SELECT id, nome, cpf_cnpj, tipo, observacoes
+      FROM clientes
+      ${where}
+      ORDER BY id DESC
+      LIMIT ? OFFSET ?
+      `,
+      [...params, limit, offset]
+    );
+
+    return res.json({
+      data: rows,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     console.error("Erro listarClientes:", error);
     res.status(500).json({ error: "Erro interno no servidor." });
@@ -150,6 +192,13 @@ async function deletarCliente(req, res) {
     return res.json({ message: "Cliente removido com sucesso!" });
   } catch (error) {
     console.error("Erro deletarCliente:", error);
+  
+    if (error.code === "ER_ROW_IS_REFERENCED_2") {
+      return res.status(409).json({
+        error: "Este cliente está vinculado a um ou mais arquivos e não pode ser removido."
+      });
+    }
+    
     res.status(500).json({ error: "Erro interno no servidor." });
   }
 }

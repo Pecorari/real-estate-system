@@ -21,21 +21,92 @@ async function getResumoArquivos(req, res) {
 
 async function listarArquivos(req, res) {
   try {
-    const [rows] = await db.query(`
-        SELECT 
-            a.*,
-            locador.nome AS locador_nome,
-            locatario.nome AS locatario_nome
-        FROM arquivos a
-        LEFT JOIN clientes locador ON locador.id = a.cliente_locador_id
-        LEFT JOIN clientes locatario ON locatario.id = a.cliente_locatario_id
-        ORDER BY a.id DESC
-    `);
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
 
-    return res.json(rows);
+    const { q, status } = req.query;
+
+    let where = "WHERE 1=1";
+    const params = [];
+
+    if (q) {
+      where += `
+        AND (
+          locador.nome LIKE ?
+          OR locatario.nome LIKE ?
+          OR a.id LIKE ?
+        )
+      `;
+      params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+    }
+
+    if (status) {
+      where += " AND a.status = ?";
+      params.push(status);
+    }
+
+    // total
+    const [[{ total }]] = await db.query(
+      `
+      SELECT COUNT(*) as total
+      FROM arquivos a
+      LEFT JOIN clientes locador ON locador.id = a.cliente_locador_id
+      LEFT JOIN clientes locatario ON locatario.id = a.cliente_locatario_id
+      ${where}
+      `,
+      params
+    );
+
+    // dados
+    const [rows] = await db.query(
+      `
+      SELECT 
+        a.*,
+        locador.nome AS locador_nome,
+        locatario.nome AS locatario_nome
+      FROM arquivos a
+      LEFT JOIN clientes locador ON locador.id = a.cliente_locador_id
+      LEFT JOIN clientes locatario ON locatario.id = a.cliente_locatario_id
+      ${where}
+      ORDER BY a.id DESC
+      LIMIT ? OFFSET ?
+      `,
+      [...params, limit, offset]
+    );
+
+    return res.json({
+      data: rows,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     console.error("Erro ao listar arquivos:", error);
     return res.status(500).json({ error: "Erro ao listar arquivos." });
+  }
+}
+
+async function detalharArquivo(req, res) {
+  try {
+    const { id } = req.params;
+
+    const [rows] = await db.query(`SELECT a.*, locador.nome AS locador_nome, locatario.nome AS locatario_nome
+      FROM arquivos a
+      LEFT JOIN clientes locador ON locador.id = a.cliente_locador_id
+      LEFT JOIN clientes locatario ON locatario.id = a.cliente_locatario_id
+      WHERE a.id = ?`, [id]
+    );
+
+    if (!rows.length) return res.status(404).json({ error: "Arquivo não encontrado." });
+
+    return res.json(rows[0]);
+  } catch (error) {
+    console.error("Erro ao buscar detalhe do arquivo:", error);
+    return res.status(500).json({ error: "Erro ao buscar arquivo." });
   }
 }
 
@@ -123,6 +194,7 @@ async function deletarArquivo(req, res) {
 module.exports = {
   getResumoArquivos,
   listarArquivos,
+  detalharArquivo,
   criarArquivo,
   atualizarArquivo,
   deletarArquivo
