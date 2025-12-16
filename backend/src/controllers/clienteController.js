@@ -103,13 +103,6 @@ async function criarCliente(req, res) {
     if (!cpf_cnpj_limpo)
         return res.status(400).json({ error: "CPF/CNPJ são obrigatórios." });
 
-
-    const [existeCPF] = await db.query(`SELECT id FROM clientes WHERE cpf_cnpj = ?`, [cpf_cnpj_limpo]);
-
-    if (existeCPF.length > 0)
-        return res.status(400).json({ error: "Já existe cliente com este CPF/CNPJ." });
-
-
     const [result] = await db.query(`INSERT INTO clientes (nome, cpf_cnpj, tipo, observacoes) VALUES (?, ?, ?, ?)`,
       [nome, cpf_cnpj_limpo, tipo, observacoes || null]
     );
@@ -132,8 +125,12 @@ async function criarCliente(req, res) {
       }
     });
   } catch (error) {
+    if (error.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({ error: "Já existe um cliente cadastrado com este CPF/CNPJ" });
+    }
+
     console.error("Erro criarCliente:", error);
-    res.status(500).json({ error: "Erro interno no servidor." });
+    return res.status(500).json({ error: "Erro interno no servidor." });
   }
 }
 
@@ -141,19 +138,14 @@ async function atualizarCliente(req, res) {
   try {
     const { id } = req.params;
     const { nome, cpf_cnpj, tipo, observacoes } = req.body;
-    const cpf_cnpj_limpo = onlyNumbers(cpf_cnpj);
+    const cpf_cnpj_limpo = cpf_cnpj ? onlyNumbers(cpf_cnpj) : null;
 
-    const [existe] = await db.query(`SELECT * FROM clientes WHERE id = ?`, [id]);
+    if (!nome && !cpf_cnpj && !tipo && !observacoes) return res.status(400).json({ error: "Nenhum campo para atualizar." });
+
+    const [existe] = await db.query(`SELECT id FROM clientes WHERE id = ?`, [id]);
 
     if (existe.length === 0)
-      return res.status(404).json({ error: "Cliente não encontrado." });
-
-    if (cpf_cnpj_limpo && cpf_cnpj_limpo !== existe[0].cpf_cnpj) {
-      const [existeCPF] = await db.query(`SELECT id FROM clientes WHERE cpf_cnpj = ?`, [cpf_cnpj_limpo]);
-
-      if (existeCPF.length > 0)
-        return res.status(400).json({ error: "Já existe cliente com este CPF/CNPJ." });
-    }
+      return res.status(400).json({ error: "Cliente não encontrado." });
 
     await db.query(`UPDATE clientes SET nome = ?, tipo = ?, cpf_cnpj = ?, observacoes = ? WHERE id = ?`,
       [
@@ -175,6 +167,12 @@ async function atualizarCliente(req, res) {
 
     return res.json({ message: "Cliente atualizado com sucesso!" });
   } catch (error) {
+    if (error.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({
+        error: "Já existe um cliente cadastrado com este CPF/CNPJ"
+      });
+    }
+
     console.error("Erro atualizarCliente:", error);
     res.status(500).json({ error: "Erro interno no servidor." });
   }

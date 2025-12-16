@@ -93,9 +93,8 @@ export default function TipoDocumento() {
                             <p>Carregando...</p>
                         ) : (
                         <Table
-                            columns={["ID", "Nome", "Ações"]}
+                            columns={["Nome", "Ações"]}
                             data={tipos.map((t) => ({
-                            id: t.id,
                             nome: t.nome,
                             ações: (
                                 <div className="flex gap-2">

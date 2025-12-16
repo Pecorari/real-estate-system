@@ -10,10 +10,8 @@ import api from "../../hooks/useApi";
 export default function ModalArquivo({ open, onClose, onCreated, arquivo }) {
   const [buscaLocador, setBuscaLocador] = useState("");
   const [listaLocadorBusca, setListaLocadorBusca] = useState([]);
-
   const [buscaLocatario, setBuscaLocatario] = useState("");
   const [listaLocatarioBusca, setListaLocatarioBusca] = useState([]);
-
   const [form, setForm] = useState({
     cliente_locador_id: "",
     cliente_locatario_id: "",
@@ -22,100 +20,7 @@ export default function ModalArquivo({ open, onClose, onCreated, arquivo }) {
     status: "ativo",
     observacoes: ""
   });
-
-const pesquisarLocador = async (value) => {
-  const q = tratarBuscaCpfNome(value, setBuscaLocador);
-
-  if (!q || q.length < 2) {
-    setListaLocadorBusca([]);
-    return;
-  }
-
-  try {
-    const { data } = await api.get("/clientes", {
-      params: { q }
-    });
-
-    const filtrados = data.data.filter(
-      (c) => c.tipo === "locador" || c.tipo === "ambos"
-    );
-
-    setListaLocadorBusca(filtrados);
-  } catch {
-    setListaLocadorBusca([]);
-  }
-};
-
-
-const pesquisarLocatario = async (value) => {
-  const q = tratarBuscaCpfNome(value, setBuscaLocatario);
-
-  if (!q || q.length < 2) {
-    setListaLocatarioBusca([]);
-    return;
-  }
-
-  try {
-    const { data } = await api.get("/clientes", {
-      params: { q }
-    });
-
-    const filtrados = data.data.filter(
-      (c) => c.tipo === "locatario" || c.tipo === "ambos"
-    );
-
-    setListaLocatarioBusca(filtrados);
-  } catch {
-    setListaLocatarioBusca([]);
-  }
-};
-
-  useEffect(() => {
-    if (arquivo) {
-      setForm({
-        cliente_locador_id: arquivo.cliente_locador_id || "",
-        cliente_locatario_id: arquivo.cliente_locatario_id || "",
-        data_inicio: arquivo.data_inicio ? arquivo.data_inicio.split("T")[0] : "",
-        data_fim: arquivo.data_fim ? arquivo.data_fim.split("T")[0] : "",
-        status: arquivo.status || "ativo",
-        observacoes: arquivo.observacoes || ""
-      });
-
-      setBuscaLocador(arquivo.locador_nome || "");
-      setBuscaLocatario(arquivo.locatario_nome || "");
-    } else {
-      setForm({
-        cliente_locador_id: "",
-        cliente_locatario_id: "",
-        data_inicio: "",
-        data_fim: "",
-        status: "ativo",
-        observacoes: ""
-      });
-      
-      setBuscaLocador("");
-      setBuscaLocatario("");
-    }
-  }, [arquivo]);
-
-  const atualizar = (campo, valor) => {
-    setForm({ ...form, [campo]: valor });
-  };
-
-  const salvar = async () => {
-    try {
-      if (arquivo?.id) {
-        await api.put(`/arquivos/${arquivo.id}`, form);
-      } else {
-        await api.post("/arquivos", form);
-      }
-      onCreated();     
-      onClose();
-    } catch (err) {
-      console.error(err);
-      alert("Erro ao salvar arquivo");
-    }
-  };
+  const [erro, setErro] = useState("");
 
   const tratarBuscaCpfNome = (value, setBusca) => {
     const apenasNumeros = value.replace(/\D/g, "");
@@ -135,6 +40,116 @@ const pesquisarLocatario = async (value) => {
     return null;
   };
 
+  const pesquisarLocador = async (value) => {
+    const q = tratarBuscaCpfNome(value, setBuscaLocador);
+
+    if (!q || q.length < 2) {
+      setListaLocadorBusca([]);
+      return;
+    }
+
+    try {
+      const { data } = await api.get("/clientes", {
+        params: { q }
+      });
+
+      const filtrados = data.data.filter(
+        (c) => c.tipo === "locador" || c.tipo === "ambos"
+      );
+
+      setListaLocadorBusca(filtrados);
+    } catch {
+      setListaLocadorBusca([]);
+    }
+  };
+
+
+  const pesquisarLocatario = async (value) => {
+    const q = tratarBuscaCpfNome(value, setBuscaLocatario);
+
+    if (!q || q.length < 2) {
+      setListaLocatarioBusca([]);
+      return;
+    }
+
+    try {
+      const { data } = await api.get("/clientes", {
+        params: { q }
+      });
+
+      const filtrados = data.data.filter(
+        (c) => c.tipo === "locatario" || c.tipo === "ambos"
+      );
+
+      setListaLocatarioBusca(filtrados);
+    } catch {
+      setListaLocatarioBusca([]);
+    }
+  };
+
+  useEffect(() => {
+    if (arquivo) {
+      setErro("");
+      setForm({
+        cliente_locador_id: arquivo.cliente_locador_id || "",
+        cliente_locatario_id: arquivo.cliente_locatario_id || "",
+        data_inicio: arquivo.data_inicio ? arquivo.data_inicio.split("T")[0] : "",
+        data_fim: arquivo.data_fim ? arquivo.data_fim.split("T")[0] : "",
+        status: arquivo.status || "ativo",
+        observacoes: arquivo.observacoes || ""
+      });
+
+      setBuscaLocador(arquivo.locador_nome || "");
+      setBuscaLocatario(arquivo.locatario_nome || "");
+    } else {
+      setErro("");
+      setForm({
+        cliente_locador_id: "",
+        cliente_locatario_id: "",
+        data_inicio: "",
+        data_fim: "",
+        status: "ativo",
+        observacoes: ""
+      });
+      
+      setBuscaLocador("");
+      setBuscaLocatario("");
+    }
+  }, [arquivo]);
+
+  useEffect(() => {
+    if (!open) {
+      setErro("");
+      setListaLocadorBusca([]);
+      setListaLocatarioBusca([]);
+    }
+  }, [open]);
+
+  const atualizar = (campo, valor) => {
+    setForm({ ...form, [campo]: valor });
+  };
+
+  const salvar = async () => {
+    if (!form.cliente_locador_id || !form.cliente_locatario_id) {
+      setErro("Selecione um locador e um locatário da lista.");
+      return;
+    }
+
+    try {
+      if (arquivo?.id) {
+        await api.put(`/arquivos/${arquivo.id}`, form);
+      } else {
+        await api.post("/arquivos", form);
+      }
+      onCreated();     
+      onClose();
+    } catch (err) {
+      const mensagem = err?.response?.data?.error || "Erro ao salvar arquivo.";
+      setErro(mensagem);
+      console.error(err);
+    }
+  };
+
   return (
     <Modal isOpen={open} onClose={onClose}>
       <h2 className="text-xl font-semibold mb-4">
@@ -144,6 +159,7 @@ const pesquisarLocatario = async (value) => {
       <div className="relative mb-3">
         <Input
           label="Locador (pesquise por nome ou CPF)"
+          required
           value={buscaLocador}
           onChange={(e) => pesquisarLocador(e.target.value)}
           placeholder="Digite para buscar..."
@@ -171,6 +187,7 @@ const pesquisarLocatario = async (value) => {
       <div className="relative mb-3">
         <Input
           label="Locatário (pesquise por nome ou CPF)"
+          required
           value={buscaLocatario}
           onChange={(e) => pesquisarLocatario(e.target.value)}
           placeholder="Digite para buscar..."
@@ -197,6 +214,7 @@ const pesquisarLocatario = async (value) => {
 
       <Input
         label="Data Início"
+        required
         type="date"
         value={form.data_inicio}
         onChange={(e) => atualizar("data_inicio", e.target.value)}
@@ -224,6 +242,10 @@ const pesquisarLocatario = async (value) => {
         value={form.observacoes}
         onChange={(e) => atualizar("observacoes", e.target.value)}
       />
+
+      {erro && (
+        <div className="bg-red-100 text-red-700 text-sm p-2 rounded mb-3">{erro}</div>
+      )}
 
       <div className="flex justify-end mt-4 gap-2">
         <Button variant="secondary" onClick={onClose}>Cancelar</Button>

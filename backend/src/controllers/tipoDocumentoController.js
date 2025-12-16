@@ -3,7 +3,7 @@ const { createLog } = require("./logController");
 
 async function listarTipoDocumentos(req, res) {
     try {
-        const [rows] = await db.execute('SELECT id, nome FROM tipo_documentos ORDER BY id ASC');
+        const [rows] = await db.execute('SELECT id, nome FROM tipo_documentos ORDER BY nome ASC');
 
         return res.json(rows);
     } catch (err) {

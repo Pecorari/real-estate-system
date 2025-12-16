@@ -72,12 +72,14 @@ export default function Clientes() {
 
   const abrirCriar = () => {
     setEditId(null);
+    setErro("");
     setForm({ nome: "", cpf_cnpj: "", tipo: "locador", observacoes: "" });
     setModalOpen(true);
   };
 
   const abrirEditar = (cliente) => {
     setEditId(cliente.id);
+    setErro("");
     setForm({
       nome: cliente.nome,
       cpf_cnpj: cliente.cpf_cnpj,
@@ -102,6 +104,8 @@ export default function Clientes() {
       setModalOpen(false);
       carregarClientes();
     } catch (err) {
+      const mensagem = err?.response?.data?.error || "Erro ao salvar cliente.";
+      setErro(mensagem);
       console.log("Erro ao salvar cliente:", err);
     }
   };
@@ -112,8 +116,9 @@ export default function Clientes() {
       setModalDeleteOpen(false);
       carregarClientes();
     } catch (err) {
+      const mensagem = err?.response?.data?.error || "Erro ao deletar cliente.";
+      setErro(mensagem);
       console.log("Erro ao deletar cliente:", err);
-      setErro(err?.response?.data?.error);
     }
   };
 
@@ -134,6 +139,19 @@ export default function Clientes() {
   const handleTipo = (valor) => {
     setTipo(valor);
   };
+
+  function formatarTipoCliente(tipo) {
+    switch (tipo) {
+      case "locador":
+        return "Locador(a)";
+      case "locatario":
+        return "Locatário(a)";
+      case "ambos":
+        return "Ambos";
+      default:
+        return tipo;
+    }
+  }
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -169,8 +187,8 @@ export default function Clientes() {
                   onChange={(e) => handleTipo(e.target.value)}
                 >
                   <option value="">— Todos —</option>
-                  <option value="locador">Locador</option>
-                  <option value="locatario">Locatário</option>
+                  <option value="locador">Locador(a)</option>
+                  <option value="locatario">Locatário(a)</option>
                   <option value="ambos">Ambos</option>
                 </Select>
               </div>
@@ -185,7 +203,7 @@ export default function Clientes() {
                     id: c.id,
                     nome: c.nome,
                     cpf_cnpj: c.cpf_cnpj,
-                    tipo: c.tipo,
+                    tipo: formatarTipoCliente(c.tipo),
                     observacoes: c.observacoes,
                     ações: (
                       <div className="flex gap-2">
@@ -238,7 +256,7 @@ export default function Clientes() {
         <Footer />
       </div>
 
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)}>
+      <Modal isOpen={modalOpen} onClose={() => {setModalOpen(false); setErro("");}}>
         <h2 className="text-lg font-semibold mb-3">
           {editId ? "Editar Cliente" : "Novo Cliente"}
         </h2>
@@ -260,7 +278,6 @@ export default function Clientes() {
 
           <Input
             label="observacoes"
-            required
             value={form.observacoes}
             onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
           />
@@ -270,21 +287,22 @@ export default function Clientes() {
             value={form.tipo}
             onChange={(e) => setForm({ ...form, tipo: e.target.value })}
           >
-            <option value="locador">Locador</option>
-            <option value="locatario">Locatário</option>
+            <option value="locador">Locador(a)</option>
+            <option value="locatario">Locatário(a)</option>
             <option value="ambos">Ambos</option>
           </Select>
 
+          {erro && (<div className="bg-red-100 text-red-700 text-sm p-2 rounded mb-3">{erro}</div>)}
           <Button type="submit" className="mt-4 w-full">
             Salvar
           </Button>
         </form>
       </Modal>
 
-      <Modal isOpen={modalDeleteOpen} onClose={() => setModalDeleteOpen(false)}>
+      <Modal isOpen={modalDeleteOpen} onClose={() => {setModalDeleteOpen(false); setErro("");}}>
         <h2 className="text-lg font-semibold mb-3">Excluir cliente?</h2>
         <p>Essa ação não poderá ser desfeita.</p>
-        {erro ? <span className="text-red-600 text-sm">{erro}</span> : <></>}
+        {erro && (<div className="bg-red-100 text-red-700 text-sm p-2 rounded mb-3">{erro}</div>)}
         <div className="flex gap-2 mt-4">
           <Button
             className="bg-gray-400 hover:bg-gray-500"

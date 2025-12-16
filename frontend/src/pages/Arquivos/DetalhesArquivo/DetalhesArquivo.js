@@ -126,6 +126,7 @@ export default function ArquivoDetalhe() {
       carregarDocumentos();
     } catch (err) {
       console.error("Erro ao enviar documento:", err);
+      alert("Erro ao enviar o documento, por favor tente novamente.");
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -177,7 +178,7 @@ export default function ArquivoDetalhe() {
 
   const documentoData = documentos.map((doc) => ({
     id: doc.id,
-    tipo: doc.tipo_documento_id,
+    tipo: doc.tipo_documento_nome,
     nome: doc.nome_original,
     acoes: (
       <div className="flex space-x-4">

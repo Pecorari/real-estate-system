@@ -3,23 +3,31 @@ const { bucket } = require("../config/firebase");
 const { createLog } = require("./logController");
 const path = require("path");
 
+function slugifyFilename(filename) {
+  return filename.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9._-]/g, "-").replace(/-+/g, "-").toLowerCase();
+}
+
 const uploadDocumento = async (req, res) => {
   try {
     const arquivoId = req.params.id;
     const { tipo_documento_id } = req.body;
-
+    
     if (!req.file) return res.status(400).json({ error: "Nenhum arquivo enviado." });
     if (!tipo_documento_id) return res.status(400).json({ error: "tipo_documento_id é obrigatório." });
 
+    const nome_original = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
+
     const [result] = await connection.execute(`INSERT INTO documentos (arquivo_id, tipo_documento_id, nome_original) VALUES (?, ?, ?)`,
-      [arquivoId, tipo_documento_id, req.file.originalname]
+      [arquivoId, tipo_documento_id, nome_original]
     );
 
     const documentoId = result.insertId;
 
-    const ext = path.extname(req.file.originalname);
-    const base = path.basename(req.file.originalname, ext).replace(/[^\w.-]/g, "_");
-    const nomeArquivo = `${base}-${Date.now()}${ext}`;
+    const ext = path.extname(nome_original).toLowerCase();
+    const baseName = path.basename(nome_original, ext);
+
+    const safeBase = slugifyFilename(baseName);
+    const nomeArquivo = `${safeBase}-${documentoId}-${Date.now()}${ext}`;
 
     const firebasePath = `arquivos/${arquivoId}/documentos/${documentoId}/${nomeArquivo}`;
 
@@ -50,7 +58,7 @@ const listarDocumentos = async (req, res) => {
     try {
         const arquivoId = req.params.id;
 
-        const [docs] = await connection.execute(`SELECT * FROM documentos WHERE arquivo_id = ? ORDER BY created_at DESC`, [arquivoId]);
+        const [docs] = await connection.execute(`SELECT d.*, td.nome AS tipo_documento_nome FROM documentos d INNER JOIN tipo_documentos td ON td.id = d.tipo_documento_id WHERE d.arquivo_id = ? ORDER BY d.created_at DESC`, [arquivoId]); 
 
         return res.status(200).json(docs);
     } catch (error) {
@@ -100,9 +108,9 @@ const deletarDocumento = async (req, res) => {
 
         if (!doc) return res.status(404).json({ error: "Documento não encontrado." });
 
-        await connection.execute(`DELETE FROM documentos WHERE id = ?`, [docId]);
+        await bucket.file(doc.caminho).delete({ ignoreNotFound: true });
 
-        await bucket.file(doc.caminho).delete();
+        await connection.execute(`DELETE FROM documentos WHERE id = ?`, [docId]);
 
         await createLog({
             usuario_id: req.usuario.id,

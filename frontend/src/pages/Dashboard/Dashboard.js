@@ -70,7 +70,7 @@ const Dashboard = () => {
                 <p className="text-2xl font-bold mt-2">{resumoClientes.locadores}</p>
               </Card>
               <Card className="transform transition duration-300 hover:scale-101">
-                <h2 className="text-lg font-semibold">Locatarios</h2>
+                <h2 className="text-lg font-semibold">Locatários</h2>
                 <p className="text-2xl font-bold mt-2">{resumoClientes.locatarios}</p>
               </Card>
             </div>
