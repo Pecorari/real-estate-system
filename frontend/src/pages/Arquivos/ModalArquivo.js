@@ -3,6 +3,8 @@ import Modal from "../../components/ui/Modal";
 import Input from "../../components/ui/Input";
 import Select from "../../components/ui/Select";
 import { Button } from "../../components/ui/Button";
+import maskCpfCnpj from "../../utils/formatarCpfCnpj";
+
 import api from "../../hooks/useApi";
 
 export default function ModalArquivo({ open, onClose, onCreated, arquivo }) {
@@ -21,33 +23,52 @@ export default function ModalArquivo({ open, onClose, onCreated, arquivo }) {
     observacoes: ""
   });
 
-  const pesquisarLocador = async (valor) => {
-    setBuscaLocador(valor);
-    if (valor.length < 2) {
-      setListaLocadorBusca([]);
-      return;
-    }
+const pesquisarLocador = async (value) => {
+  const q = tratarBuscaCpfNome(value, setBuscaLocador);
 
-    const { data } = await api.get("/search/clientes", {
-      params: { q: valor, tipo: "locador" }
+  if (!q || q.length < 2) {
+    setListaLocadorBusca([]);
+    return;
+  }
+
+  try {
+    const { data } = await api.get("/clientes", {
+      params: { q }
     });
 
-    setListaLocadorBusca(data);
-  };
+    const filtrados = data.data.filter(
+      (c) => c.tipo === "locador" || c.tipo === "ambos"
+    );
 
-  const pesquisarLocatario = async (valor) => {
-    setBuscaLocatario(valor);
-    if (valor.length < 2) {
-      setListaLocatarioBusca([]);
-      return;
-    }
+    setListaLocadorBusca(filtrados);
+  } catch {
+    setListaLocadorBusca([]);
+  }
+};
 
-    const { data } = await api.get("/search/clientes", {
-      params: { q: valor, tipo: "locatario" }
+
+const pesquisarLocatario = async (value) => {
+  const q = tratarBuscaCpfNome(value, setBuscaLocatario);
+
+  if (!q || q.length < 2) {
+    setListaLocatarioBusca([]);
+    return;
+  }
+
+  try {
+    const { data } = await api.get("/clientes", {
+      params: { q }
     });
 
-    setListaLocatarioBusca(data);
-  };
+    const filtrados = data.data.filter(
+      (c) => c.tipo === "locatario" || c.tipo === "ambos"
+    );
+
+    setListaLocatarioBusca(filtrados);
+  } catch {
+    setListaLocatarioBusca([]);
+  }
+};
 
   useEffect(() => {
     if (arquivo) {
@@ -94,6 +115,24 @@ export default function ModalArquivo({ open, onClose, onCreated, arquivo }) {
       console.error(err);
       alert("Erro ao salvar arquivo");
     }
+  };
+
+  const tratarBuscaCpfNome = (value, setBusca) => {
+    const apenasNumeros = value.replace(/\D/g, "");
+    const temLetra = /[a-zA-Z]/.test(value);
+
+    if (temLetra) {
+      setBusca(value);
+      return value;
+    }
+
+    if (apenasNumeros.length <= 14) {
+      const mascarado = maskCpfCnpj(apenasNumeros);
+      setBusca(mascarado);
+      return apenasNumeros;
+    }
+
+    return null;
   };
 
   return (

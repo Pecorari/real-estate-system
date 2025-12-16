@@ -1,6 +1,16 @@
 const db = require("../config/db_connection");
 const { createLog } = require("./logController");
 
+function onlyNumbers(value) {
+  return value.replace(/\D/g, "");
+}
+function formatCpfCnpj(value) {
+  if (!value) return "";
+  if (value.length === 11) return value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  if (value.length === 14) return value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
+  return value;
+}
+
 async function getResumoClientes(req, res) {
   try {
     const [[totais]] = await db.execute(`
@@ -34,8 +44,16 @@ async function listarClientes(req, res) {
     const params = [];
 
     if (q) {
-      where += " AND (id LIKE ? OR nome LIKE ? OR cpf_cnpj LIKE ?)";
-      params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+      const qLimpo = onlyNumbers(q);
+      const temLetra = /[a-zA-Z]/.test(q);
+
+      if (temLetra) {
+        where += " AND nome LIKE ?";
+        params.push(`%${q}%`);
+      } else {
+        where += " AND (id LIKE ? OR cpf_cnpj LIKE ?)";
+        params.push(`%${qLimpo}%`, `%${qLimpo}%`);
+      }
     }
 
     if (tipo) {
@@ -43,26 +61,21 @@ async function listarClientes(req, res) {
       params.push(tipo);
     }
 
-    // total de registros
-    const [[{ total }]] = await db.query(
-      `SELECT COUNT(*) as total FROM clientes ${where}`,
+    const [[{ total }]] = await db.query(`SELECT COUNT(*) as total FROM clientes ${where}`,
       params
     );
 
-    // dados paginados
-    const [rows] = await db.query(
-      `
-      SELECT id, nome, cpf_cnpj, tipo, observacoes
-      FROM clientes
-      ${where}
-      ORDER BY id DESC
-      LIMIT ? OFFSET ?
-      `,
+    const [rows] = await db.query(`SELECT id, nome, cpf_cnpj, tipo, observacoes FROM clientes ${where} ORDER BY id DESC LIMIT ? OFFSET ?`,
       [...params, limit, offset]
     );
 
+    const clientesFormatados = rows.map(c => ({
+      ...c,
+      cpf_cnpj: formatCpfCnpj(c.cpf_cnpj)
+    }));
+
     return res.json({
-      data: rows,
+      data: clientesFormatados,
       pagination: {
         page,
         limit,
@@ -79,6 +92,7 @@ async function listarClientes(req, res) {
 async function criarCliente(req, res) {
   try {
     const { nome, cpf_cnpj, tipo, observacoes} = req.body;
+    const cpf_cnpj_limpo = onlyNumbers(cpf_cnpj);
 
     if (!nome || !tipo)
       return res.status(400).json({ error: "Nome e tipo são obrigatórios." });
@@ -86,18 +100,18 @@ async function criarCliente(req, res) {
     if (!["locador", "locatario", "ambos"].includes(tipo.toLowerCase()))
       return res.status(400).json({ error: "Tipo deve ser 'locador', 'locatario' ou 'ambos'." });
 
-    if (!cpf_cnpj)
+    if (!cpf_cnpj_limpo)
         return res.status(400).json({ error: "CPF/CNPJ são obrigatórios." });
 
 
-    const [existeCPF] = await db.query(`SELECT id FROM clientes WHERE cpf_cnpj = ?`, [cpf_cnpj]);
+    const [existeCPF] = await db.query(`SELECT id FROM clientes WHERE cpf_cnpj = ?`, [cpf_cnpj_limpo]);
 
     if (existeCPF.length > 0)
         return res.status(400).json({ error: "Já existe cliente com este CPF/CNPJ." });
 
 
     const [result] = await db.query(`INSERT INTO clientes (nome, cpf_cnpj, tipo, observacoes) VALUES (?, ?, ?, ?)`,
-      [nome, cpf_cnpj, tipo, observacoes || null]
+      [nome, cpf_cnpj_limpo, tipo, observacoes || null]
     );
 
     await createLog({
@@ -112,7 +126,7 @@ async function criarCliente(req, res) {
       cliente: {
         id: result.insertId,
         nome,
-        cpf_cnpj,
+        cpf_cnpj: formatCpfCnpj(cpf_cnpj_limpo),
         tipo,
         observacoes
       }
@@ -126,20 +140,16 @@ async function criarCliente(req, res) {
 async function atualizarCliente(req, res) {
   try {
     const { id } = req.params;
-    const {
-      nome,
-      cpf_cnpj,
-      tipo,
-      observacoes
-    } = req.body;
+    const { nome, cpf_cnpj, tipo, observacoes } = req.body;
+    const cpf_cnpj_limpo = onlyNumbers(cpf_cnpj);
 
     const [existe] = await db.query(`SELECT * FROM clientes WHERE id = ?`, [id]);
 
     if (existe.length === 0)
       return res.status(404).json({ error: "Cliente não encontrado." });
 
-    if (cpf_cnpj && cpf_cnpj !== existe[0].cpf_cnpj) {
-      const [existeCPF] = await db.query(`SELECT id FROM clientes WHERE cpf_cnpj = ?`, [cpf_cnpj]);
+    if (cpf_cnpj_limpo && cpf_cnpj_limpo !== existe[0].cpf_cnpj) {
+      const [existeCPF] = await db.query(`SELECT id FROM clientes WHERE cpf_cnpj = ?`, [cpf_cnpj_limpo]);
 
       if (existeCPF.length > 0)
         return res.status(400).json({ error: "Já existe cliente com este CPF/CNPJ." });
@@ -149,7 +159,7 @@ async function atualizarCliente(req, res) {
       [
         nome,
         tipo,
-        cpf_cnpj,
+        cpf_cnpj_limpo,
         observacoes || null,
         id
       ]

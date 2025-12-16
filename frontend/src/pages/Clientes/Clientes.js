@@ -8,7 +8,7 @@ import Input from "../../components/ui/Input";
 import Select from "../../components/ui/Select";
 import { Button } from "../../components/ui/Button";
 import Modal from "../../components/ui/Modal";
-
+import maskCpfCnpj from '../../utils/formatarCpfCnpj';
 import api from "../../hooks/useApi";
 
 export default function Clientes() {
@@ -34,12 +34,14 @@ export default function Clientes() {
   const carregarClientes = async (pageAtual = page) => {
     setLoading(true);
 
-    try {
+    try {// eslint-disable-next-line
+      const searchLimpo = /^[\d.\-\/]+$/.test(search) ? search.replace(/\D/g, "") : search;
+
       const { data } = await api.get("/clientes", {
         params: {
           page: pageAtual,
           limit,
-          q: search || undefined,
+          q: searchLimpo || undefined,
           tipo: tipo || undefined
         }
       });
@@ -54,10 +56,15 @@ export default function Clientes() {
   };
 
   useEffect(() => {
-    carregarClientes(1);
-    setPage(1);
+    const timer = setTimeout(() => { carregarClientes(1); }, 400);
+    return () => clearTimeout(timer);
     // eslint-disable-next-line
-  }, [search, tipo]);
+  }, [search]);
+  useEffect(() => {
+    setPage(1);
+    carregarClientes(1);
+    // eslint-disable-next-line
+  }, [tipo]);
   useEffect(() => {
     carregarClientes(page);
     // eslint-disable-next-line
@@ -110,23 +117,23 @@ export default function Clientes() {
     }
   };
 
-  const handleInput = (valor) => {
-    setSearch(valor);
+  const handleSearchChange = (value) => {
+    const temLetra = /[a-zA-Z]/.test(value);
+    const apenasNumeros = value.replace(/\D/g, "");
+
+    if (temLetra) {
+      setSearch(value);
+      return;
+    }
+
+    if (apenasNumeros.length <= 14) {
+      setSearch(maskCpfCnpj(apenasNumeros));
+    }
   };
 
   const handleTipo = (valor) => {
     setTipo(valor);
   };
-
-  // Debounce para evitar flood de requisições
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      carregarClientes(1);
-    }, 400);
-
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line
-  }, [search]);
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -151,7 +158,7 @@ export default function Clientes() {
                   label="Pesquisar"
                   placeholder="ID, Nome, CPF/CNPJ"
                   value={search}
-                  onChange={(e) => handleInput(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                 />
               </div>
 
@@ -245,10 +252,10 @@ export default function Clientes() {
           />
 
           <Input
-            label="cpf_cnpj"
+            label="CPF / CNPJ"
             required
             value={form.cpf_cnpj}
-            onChange={(e) => setForm({ ...form, cpf_cnpj: e.target.value })}
+            onChange={(e) => setForm({ ...form, cpf_cnpj: maskCpfCnpj(e.target.value) })}
           />
 
           <Input
