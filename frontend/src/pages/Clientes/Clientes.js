@@ -10,6 +10,7 @@ import { Button } from "../../components/ui/Button";
 import Modal from "../../components/ui/Modal";
 import maskCpfCnpj from '../../utils/formatarCpfCnpj';
 import api from "../../hooks/useApi";
+import { FaUserPlus, FaEdit, FaTrash, FaArrowLeft, FaArrowRight } from "react-icons/fa";
 
 export default function Clientes() {
   const [clientes, setClientes] = useState([]);
@@ -167,7 +168,7 @@ export default function Clientes() {
                 Clientes
               </h2>
 
-              <Button onClick={abrirCriar} className="w-auto">+ Cadastrar Cliente</Button>
+              <Button onClick={abrirCriar} className="w-auto"><FaUserPlus /> Cadastrar Cliente</Button>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 mb-6 w-full sm:w-auto max-w-3xl">
@@ -206,14 +207,18 @@ export default function Clientes() {
                     tipo: formatarTipoCliente(c.tipo),
                     observacoes: c.observacoes,
                     ações: (
-                      <div className="flex gap-2">
+                      <div className="flex gap-4">
                         <button
                           className="text-blue-600 hover:underline"
                           onClick={() => abrirEditar(c)}
                         >
-                          Editar
+                          <FaEdit
+                            className="text-blue-600 hover:text-blue-800 cursor-pointer"
+                            size={20}
+                            title="Editar Clientes"
+                          />
                         </button>
-
+                        <p className="text-gray-400"> | </p>
                         <button
                           className="text-red-600 hover:underline"
                           onClick={() => {
@@ -221,7 +226,11 @@ export default function Clientes() {
                             setModalDeleteOpen(true);
                           }}
                         >
-                          Deletar
+                          <FaTrash
+                            className="text-red-500 hover:text-red-800 cursor-pointer"
+                            size={20}
+                            title="Deletar Clientes"
+                          />
                         </button>
                       </div>
                     ),
@@ -233,7 +242,7 @@ export default function Clientes() {
                     onClick={() => setPage(p => Math.max(p - 1, 1))}
                     className="bg-blue-600 hover:bg-blue-800 text-white rounded px-4 py-2 text-xs"
                   >
-                    Anterior
+                    <FaArrowLeft />
                   </button>
 
                   <span className="text-sm text-gray-600">
@@ -245,7 +254,7 @@ export default function Clientes() {
                     onClick={() => setPage(p => Math.min(p + 1, totalPages))}
                     className="bg-blue-600 hover:bg-blue-800 text-white rounded px-4 py-2 text-xs"
                   >
-                    Próxima
+                    <FaArrowRight />
                   </button>
                 </div>
               </>

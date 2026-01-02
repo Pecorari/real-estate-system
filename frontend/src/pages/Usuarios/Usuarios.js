@@ -7,7 +7,7 @@ import { Button } from "../../components/ui/Button";
 import Table from "../../components/ui/Table";
 import Modal from "../../components/ui/Modal";
 import Select from "../../components/ui/Select";
-
+import { FaEdit, FaTrash } from "react-icons/fa";
 import Navbar from "../../components/layout/Navbar";
 import Sidebar from "../../components/layout/Sidebar";
 import Footer from "../../components/layout/Footer";
@@ -127,8 +127,13 @@ export default function Usuarios() {
                         onClick={() => abrirEditar(u)}
                         className="text-blue-600 hover:underline"
                       >
-                        Editar
+                        <FaEdit
+                            className="text-blue-600 hover:text-blue-800 cursor-pointer"
+                            size={20}
+                            title="Editar Usuario"
+                        />
                       </button>
+                      <p className="text-gray-400"> | </p>
                       <button
                         onClick={() => {
                           setDeleteId(u.id);
@@ -136,7 +141,11 @@ export default function Usuarios() {
                         }}
                         className="text-red-600 hover:underline"
                       >
-                        Deletar
+                        <FaTrash
+                            className="text-red-500 hover:text-red-800 cursor-pointer"
+                            size={20}
+                            title="Deletar Usuario"
+                        />
                       </button>
                     </div>
                   ),

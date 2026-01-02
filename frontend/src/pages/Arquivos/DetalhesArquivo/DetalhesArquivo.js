@@ -176,9 +176,22 @@ export default function ArquivoDetalhe() {
 
   const documentoColumns = ["ID", "Tipo", "Nome", "Ações"];
 
-  const documentoData = documentos.map((doc) => ({
+  const tiposEmNegrito = [
+    "Contrato de locação",
+    "Laudo de vistoria",
+    "Protocolo de retirada de chaves",
+  ];
+
+  const documentoData = documentos.map((doc) => {
+    const isPrioritario = tiposEmNegrito.includes(doc.tipo_documento_nome);
+    return {
     id: doc.id,
-    tipo: doc.tipo_documento_nome,
+    tipo: (
+      <span className={`flex items-center gap-2 ${isPrioritario ? "font-bold" : ""}`}>
+        {isPrioritario && <span className="w-2 h-2 bg-blue-600 rounded-full" />}
+        {doc.tipo_documento_nome}
+      </span>
+    ),
     nome: doc.nome_original,
     acoes: (
       <div className="flex space-x-4">
@@ -190,7 +203,7 @@ export default function ArquivoDetalhe() {
         />
         <p className="text-gray-400"> | </p>
         <FaTrash
-          className="text-red-500 hover:text-red-600 cursor-pointer"
+          className="text-red-500 hover:text-red-800 cursor-pointer"
           size={20}
           title="Deletar Documento"
           onClick={() => {
@@ -200,7 +213,7 @@ export default function ArquivoDetalhe() {
         />
       </div>
     ),
-  }));
+  }});
 
   if (loading || !arquivo) return <p className="p-6">Carregando...</p>;
 
@@ -231,7 +244,7 @@ export default function ArquivoDetalhe() {
                     onClick={() => setModalAtualizarOpen(true)}
                   />
                   <FaTrash
-                    className="text-red-500 hover:text-red-600 cursor-pointer"
+                    className="text-red-500 hover:text-red-800 cursor-pointer"
                     size={22}
                     title="Deletar Arquivo"
                     onClick={() => setModalDeletarOpen(true)}

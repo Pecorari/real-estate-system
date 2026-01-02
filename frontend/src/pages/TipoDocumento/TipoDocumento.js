@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../../hooks/useApi";
+import { FaEdit, FaTrash } from "react-icons/fa";
 
 import Card from "../../components/ui/Card";
 import Input from "../../components/ui/Input";
@@ -98,20 +99,24 @@ export default function TipoDocumento() {
                             nome: t.nome,
                             ações: (
                                 <div className="flex gap-2">
-                                    <button
-                                        onClick={() => abrirEditar(t)}
-                                        className="text-blue-600 hover:underline"
-                                    >
-                                        Editar
+                                    <button onClick={() => abrirEditar(t)} className="text-blue-600 hover:underline">
+                                        <FaEdit
+                                            className="text-blue-600 hover:text-blue-800 cursor-pointer"
+                                            size={20}
+                                            title="Editar Tipo de documento"
+                                        />
                                     </button>
-                                    <button
-                                        onClick={() => {
+                                    <p className="text-gray-400"> | </p>
+                                    <button onClick={() => {
                                         setDeleteId(t.id);
                                         setModalDeleteOpen(true);
-                                        }}
-                                        className="text-red-600 hover:underline"
+                                    }} className="text-red-600 hover:underline"
                                     >
-                                        Deletar
+                                        <FaTrash
+                                            className="text-red-500 hover:text-red-800 cursor-pointer"
+                                            size={20}
+                                            title="Deletar Tipo de documento"
+                                        />
                                     </button>
                                 </div>
                             ),

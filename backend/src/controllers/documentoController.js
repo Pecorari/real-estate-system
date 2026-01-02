@@ -58,7 +58,23 @@ const listarDocumentos = async (req, res) => {
     try {
         const arquivoId = req.params.id;
 
-        const [docs] = await connection.execute(`SELECT d.*, td.nome AS tipo_documento_nome FROM documentos d INNER JOIN tipo_documentos td ON td.id = d.tipo_documento_id WHERE d.arquivo_id = ? ORDER BY d.created_at DESC`, [arquivoId]); 
+        const [docs] = await connection.execute(`
+          SELECT 
+            d.*, 
+            td.nome AS tipo_documento_nome
+          FROM documentos d
+          INNER JOIN tipo_documentos td 
+            ON td.id = d.tipo_documento_id
+          WHERE d.arquivo_id = ?
+          ORDER BY 
+            CASE td.nome
+              WHEN 'Contrato de locação' THEN 1
+              WHEN 'Laudo de vistoria' THEN 2
+              WHEN 'Protocolo de retirada de chaves' THEN 3
+              ELSE 4
+            END,
+            d.created_at DESC
+          `, [arquivoId]); 
 
         return res.status(200).json(docs);
     } catch (error) {

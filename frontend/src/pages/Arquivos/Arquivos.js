@@ -11,6 +11,7 @@ import api from "../../hooks/useApi";
 import Input from "../../components/ui/Input";
 import Select from "../../components/ui/Select";
 import ModalArquivo from "./ModalArquivo";
+import { FaFolderPlus, FaArrowLeft, FaArrowRight } from "react-icons/fa";
 
 export default function Arquivos() {
   const [arquivos, setArquivos] = useState([]);
@@ -76,7 +77,7 @@ export default function Arquivos() {
           <Card>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
               <h2 className="text-2xl font-bold text-center sm:text-left">Arquivos</h2>
-              <Button onClick={() => setModalOpen(true)} className="w-auto">+ Adicionar Arquivo</Button>
+              <Button onClick={() => setModalOpen(true)} className="w-auto"><FaFolderPlus /> Adicionar Arquivo</Button>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 mb-6 w-full sm:w-auto max-w-3xl">
@@ -124,7 +125,8 @@ export default function Arquivos() {
                     onClick={() => setPage(p => Math.max(p - 1, 1))}
                     className="bg-blue-600 hover:bg-blue-800 text-white rounded px-4 py-2 text-xs"
                   >
-                    Anterior
+                    <FaArrowLeft />
+                    {/* Anterior */}
                   </button>
 
                   <span className="text-sm">
@@ -136,7 +138,8 @@ export default function Arquivos() {
                     onClick={() => setPage(p => Math.min(p + 1, totalPages))}
                     className="bg-blue-600 hover:bg-blue-800 text-white rounded px-4 py-2 text-xs"
                   >
-                    Próxima
+                    <FaArrowRight />
+                    {/* Próxima */}
                   </button>
                 </div>
               </>
