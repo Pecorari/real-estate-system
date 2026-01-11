@@ -101,7 +101,7 @@ const Dashboard = () => {
               <div className="w-full md:w-1/2 bg-white p-4 rounded-xl shadow">
                 <h2 className="text-lg font-semibold mb-10 text-center">Resumo dos Arquivos</h2>
 
-                <ResponsiveContainer width="70%" height={350} style={{ margin: "auto" }}>
+                <ResponsiveContainer width="70%" height={300} style={{ margin: "auto" }}>
                   <BarChart data={dataBar}>
                     <XAxis dataKey="name" />
                     <Tooltip />
