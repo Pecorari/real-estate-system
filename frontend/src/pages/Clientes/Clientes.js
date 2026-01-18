@@ -11,12 +11,14 @@ import Modal from "../../components/ui/Modal";
 import maskCpfCnpj from '../../utils/formatarCpfCnpj';
 import api from "../../hooks/useApi";
 import { FaUserPlus, FaEdit, FaTrash, FaArrowLeft, FaArrowRight } from "react-icons/fa";
+import titleCase from "../../utils/formatarTitleCase";
 
 export default function Clientes() {
   const [clientes, setClientes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [tipo, setTipo] = useState("");
+  const [tiposCliente, setTiposCliente] = useState([]);
+  const [tipoClienteId, setTipoClienteId] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const limit = 10;
@@ -25,7 +27,7 @@ export default function Clientes() {
   const [form, setForm] = useState({
     nome: "",
     cpf_cnpj: "",
-    tipo: "locador",
+    tipo_cliente_id: "",
     observacoes: ""
   });
   const [editId, setEditId] = useState(null);
@@ -43,11 +45,18 @@ export default function Clientes() {
           page: pageAtual,
           limit,
           q: searchLimpo || undefined,
-          tipo: tipo || undefined
+          tipo_cliente_id: tipoClienteId || undefined
         }
       });
 
-      setClientes(data.data);
+      const formatados = data.data.map(r => ({
+          ...r,
+          tipo_cliente: {
+            nome: titleCase(r.tipo_cliente.nome)
+          }
+      }))
+
+      setClientes(formatados);
       setTotalPages(data.pagination.totalPages);
     } catch (err) {
       console.log("Erro ao carregar clientes:", err);
@@ -62,19 +71,32 @@ export default function Clientes() {
     // eslint-disable-next-line
   }, [search]);
   useEffect(() => {
-    setPage(1);
-    carregarClientes(1);
-    // eslint-disable-next-line
-  }, [tipo]);
-  useEffect(() => {
     carregarClientes(page);
     // eslint-disable-next-line
-  }, [page]);
+  }, [page, tipoClienteId]);
+  useEffect(() => {
+    async function carregarTipos() {
+      const { data } = await api.get("/tipo-cli");
+
+      const formatados = data.map(tipo => ({
+          ...tipo,
+          nome: titleCase(tipo.nome)
+      }))
+
+      setTiposCliente(formatados);
+    }
+    carregarTipos();
+  }, []);
 
   const abrirCriar = () => {
     setEditId(null);
     setErro("");
-    setForm({ nome: "", cpf_cnpj: "", tipo: "locador", observacoes: "" });
+    setForm({
+      nome: "",
+      cpf_cnpj: "",
+      tipo_cliente_id: "",
+      observacoes: ""
+    });
     setModalOpen(true);
   };
 
@@ -84,7 +106,7 @@ export default function Clientes() {
     setForm({
       nome: cliente.nome,
       cpf_cnpj: cliente.cpf_cnpj,
-      tipo: cliente.tipo,
+      tipo_cliente_id: cliente.tipo_cliente.id,
       observacoes: cliente.observacoes,
     });
     setModalOpen(true);
@@ -95,10 +117,8 @@ export default function Clientes() {
 
     try {
       if (editId) {
-        console.log(form);
         await api.put(`/clientes/${editId}`, form);
       } else {
-        console.log(form);
         await api.post("/clientes", form);
       }
 
@@ -137,23 +157,6 @@ export default function Clientes() {
     }
   };
 
-  const handleTipo = (valor) => {
-    setTipo(valor);
-  };
-
-  function formatarTipoCliente(tipo) {
-    switch (tipo) {
-      case "locador":
-        return "Locador(a)";
-      case "locatario":
-        return "Locatário(a)";
-      case "ambos":
-        return "Ambos";
-      default:
-        return tipo;
-    }
-  }
-
   return (
     <div className="flex h-screen bg-gray-100">
       <Sidebar />
@@ -184,13 +187,15 @@ export default function Clientes() {
               <div className="w-full sm:w-52">
                 <Select
                   label="Tipo"
-                  value={tipo}
-                  onChange={(e) => handleTipo(e.target.value)}
+                  value={tipoClienteId}
+                  onChange={(e) => setTipoClienteId(Number(e.target.value))}
                 >
                   <option value="">— Todos —</option>
-                  <option value="locador">Locador(a)</option>
-                  <option value="locatario">Locatário(a)</option>
-                  <option value="ambos">Ambos</option>
+                  {tiposCliente.map(tc => (
+                    <option key={tc.id} value={tc.id}>
+                      {tc.nome}
+                    </option>
+                  ))}
                 </Select>
               </div>
             </div>
@@ -204,7 +209,7 @@ export default function Clientes() {
                     id: c.id,
                     nome: c.nome,
                     cpf_cnpj: c.cpf_cnpj,
-                    tipo: formatarTipoCliente(c.tipo),
+                    tipo: c.tipo_cliente?.nome || "-",
                     observacoes: c.observacoes,
                     ações: (
                       <div className="flex gap-4">
@@ -292,13 +297,17 @@ export default function Clientes() {
           />
 
           <Select
+            required
             label="Tipo"
-            value={form.tipo}
-            onChange={(e) => setForm({ ...form, tipo: e.target.value })}
+            value={form.tipo_cliente_id}
+            onChange={(e) => setForm({ ...form, tipo_cliente_id: Number(e.target.value) })}
           >
-            <option value="locador">Locador(a)</option>
-            <option value="locatario">Locatário(a)</option>
-            <option value="ambos">Ambos</option>
+            <option value="">Selecione</option>
+            {tiposCliente.map(tc => (
+              <option key={tc.id} value={tc.id}>
+                {tc.nome}
+              </option>
+            ))}
           </Select>
 
           {erro && (<div className="bg-red-100 text-red-700 text-sm p-2 rounded mb-3">{erro}</div>)}

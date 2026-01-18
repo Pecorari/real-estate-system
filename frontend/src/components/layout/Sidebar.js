@@ -5,9 +5,9 @@ import { useState } from "react";
 import { HiMenu, HiX } from "react-icons/hi";
 
 export default function Sidebar() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user } = useAuth();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
   const isActive = (path) => location.pathname === path;
@@ -20,6 +20,7 @@ export default function Sidebar() {
 
   const adminLinks = [
     { path: "/tipo-documento", label: "Tipos de Documentos" },
+    { path: "/tipo-cliente", label: "Tipos de Clientes" },
     { path: "/usuarios", label: "Usuarios" },
     { path: "/logs", label: "Logs" },
   ];

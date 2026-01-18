@@ -54,7 +54,7 @@ export default function ModalArquivo({ open, onClose, onCreated, arquivo }) {
       });
 
       const filtrados = data.data.filter(
-        (c) => c.tipo === "locador" || c.tipo === "ambos"
+        (c) => c.tipo_cliente.nome === 'locador' || c.tipo_cliente.nome === 'locador e  locatario'
       );
 
       setListaLocadorBusca(filtrados);
@@ -78,7 +78,7 @@ export default function ModalArquivo({ open, onClose, onCreated, arquivo }) {
       });
 
       const filtrados = data.data.filter(
-        (c) => c.tipo === "locatario" || c.tipo === "ambos"
+        (c) => c.tipo_cliente.nome === 'locatario' || c.tipo_cliente.nome === 'locador e locatario'
       );
 
       setListaLocatarioBusca(filtrados);

@@ -16,9 +16,10 @@ async function getResumoClientes(req, res) {
     const [[totais]] = await db.execute(`
       SELECT
         COUNT(*) AS total,
-        SUM(CASE WHEN tipo = 'locador' OR tipo = 'ambos' THEN 1 ELSE 0 END) AS locadores,
-        SUM(CASE WHEN tipo = 'locatario' OR tipo = 'ambos' THEN 1 ELSE 0 END) AS locatarios
-      FROM clientes
+        SUM(CASE WHEN tc.nome = 'Locador' THEN 1 ELSE 0 END) AS locadores,
+        SUM(CASE WHEN tc.nome = 'Locatário' THEN 1 ELSE 0 END) AS locatarios
+      FROM clientes c
+      JOIN tipo_clientes tc ON tc.id = c.tipo_cliente_id
     `);
 
     res.json({
@@ -38,7 +39,7 @@ async function listarClientes(req, res) {
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
 
-    const { q, tipo } = req.query;
+    const { q, tipo_cliente_id } = req.query;
 
     let where = "WHERE 1=1";
     const params = [];
@@ -48,30 +49,48 @@ async function listarClientes(req, res) {
       const temLetra = /[a-zA-Z]/.test(q);
 
       if (temLetra) {
-        where += " AND nome LIKE ?";
+        where += " AND c.nome LIKE ?";
         params.push(`%${q}%`);
       } else {
-        where += " AND (id LIKE ? OR cpf_cnpj LIKE ?)";
+        where += " AND (c.id LIKE ? OR c.cpf_cnpj LIKE ?)";
         params.push(`%${qLimpo}%`, `%${qLimpo}%`);
       }
     }
 
-    if (tipo) {
-      where += " AND tipo = ?";
-      params.push(tipo);
+    if (tipo_cliente_id) {
+      where += " AND c.tipo_cliente_id = ?";
+      params.push(tipo_cliente_id);
     }
 
-    const [[{ total }]] = await db.query(`SELECT COUNT(*) as total FROM clientes ${where}`,
+    const [[{ total }]] = await db.query(`SELECT COUNT(*) as total FROM clientes c ${where}`,
       params
     );
 
-    const [rows] = await db.query(`SELECT id, nome, cpf_cnpj, tipo, observacoes FROM clientes ${where} ORDER BY id DESC LIMIT ? OFFSET ?`,
+    const [rows] = await db.query(`
+      SELECT
+        c.id,
+        c.nome,
+        c.cpf_cnpj,
+        c.observacoes,
+        tc.id AS tipo_cliente_id,
+        tc.nome AS tipo_cliente_nome
+      FROM clientes c
+      JOIN tipo_clientes tc ON tc.id = c.tipo_cliente_id
+      ${where}
+      ORDER BY c.id DESC
+      LIMIT ? OFFSET ?`,
       [...params, limit, offset]
     );
 
     const clientesFormatados = rows.map(c => ({
-      ...c,
-      cpf_cnpj: formatCpfCnpj(c.cpf_cnpj)
+      id: c.id,
+      nome: c.nome,
+      cpf_cnpj: formatCpfCnpj(c.cpf_cnpj),
+      observacoes: c.observacoes,
+      tipo_cliente: {
+        id: c.tipo_cliente_id,
+        nome: c.tipo_cliente_nome
+      }
     }));
 
     return res.json({
@@ -91,20 +110,23 @@ async function listarClientes(req, res) {
 
 async function criarCliente(req, res) {
   try {
-    const { nome, cpf_cnpj, tipo, observacoes} = req.body;
+    const { nome, cpf_cnpj, tipo_cliente_id, observacoes} = req.body;
     const cpf_cnpj_limpo = onlyNumbers(cpf_cnpj);
 
-    if (!nome || !tipo)
-      return res.status(400).json({ error: "Nome e tipo são obrigatórios." });
-
-    if (!["locador", "locatario", "ambos"].includes(tipo.toLowerCase()))
-      return res.status(400).json({ error: "Tipo deve ser 'locador', 'locatario' ou 'ambos'." });
+    if (!nome || !tipo_cliente_id)
+      return res.status(400).json({ error: "Nome e tipo do cliente são obrigatórios." });
 
     if (!cpf_cnpj_limpo)
         return res.status(400).json({ error: "CPF/CNPJ são obrigatórios." });
 
-    const [result] = await db.query(`INSERT INTO clientes (nome, cpf_cnpj, tipo, observacoes) VALUES (?, ?, ?, ?)`,
-      [nome, cpf_cnpj_limpo, tipo, observacoes || null]
+    const [[tipoExiste]] = await db.query(`SELECT id, nome FROM tipo_clientes WHERE id = ?`, [tipo_cliente_id]);
+
+    if (!tipoExiste)
+      return res.status(400).json({ error: "Tipo de cliente inválido." });
+
+
+    const [result] = await db.query(`INSERT INTO clientes (nome, cpf_cnpj, tipo_cliente_id, observacoes) VALUES (?, ?, ?, ?)`,
+      [nome, cpf_cnpj_limpo, tipo_cliente_id, observacoes || null]
     );
 
     await createLog({
@@ -115,12 +137,16 @@ async function criarCliente(req, res) {
       descricao: `Cliente ${nome} criado`
     });
 
-    return res.status(201).json({ message: "Cliente criado com sucesso!",
+    return res.status(201).json({
+      message: "Cliente criado com sucesso!",
       cliente: {
         id: result.insertId,
         nome,
         cpf_cnpj: formatCpfCnpj(cpf_cnpj_limpo),
-        tipo,
+        tipo_cliente: {
+          id: tipoExiste.id,
+          nome: tipoExiste.nome
+        },
         observacoes
       }
     });
@@ -137,21 +163,36 @@ async function criarCliente(req, res) {
 async function atualizarCliente(req, res) {
   try {
     const { id } = req.params;
-    const { nome, cpf_cnpj, tipo, observacoes } = req.body;
-    const cpf_cnpj_limpo = cpf_cnpj ? onlyNumbers(cpf_cnpj) : null;
+    const { nome, cpf_cnpj, tipo_cliente_id, observacoes } = req.body;
 
-    if (!nome && !cpf_cnpj && !tipo && !observacoes) return res.status(400).json({ error: "Nenhum campo para atualizar." });
+    if (!nome && !cpf_cnpj && !tipo_cliente_id && !observacoes)
+      return res.status(400).json({ error: "Nenhum campo para atualizar." });
 
     const [existe] = await db.query(`SELECT id FROM clientes WHERE id = ?`, [id]);
 
     if (existe.length === 0)
       return res.status(400).json({ error: "Cliente não encontrado." });
 
-    await db.query(`UPDATE clientes SET nome = ?, tipo = ?, cpf_cnpj = ?, observacoes = ? WHERE id = ?`,
+    if (tipo_cliente_id) {
+      const [[tipoExiste]] = await db.query(`SELECT id FROM tipo_clientes WHERE id = ?`, [tipo_cliente_id]);
+
+      if (!tipoExiste)
+        return res.status(400).json({ error: "Tipo de cliente inválido." });
+    }
+
+
+    await db.query(`
+      UPDATE clientes
+      SET
+        nome = COALESCE(?, nome),
+        cpf_cnpj = COALESCE(?, cpf_cnpj),
+        tipo_cliente_id = COALESCE(?, tipo_cliente_id),
+        observacoes = COALESCE(?, observacoes)
+      WHERE id = ?`,
       [
         nome,
-        tipo,
-        cpf_cnpj_limpo,
+        cpf_cnpj ? onlyNumbers(cpf_cnpj) : null,
+        tipo_cliente_id,
         observacoes || null,
         id
       ]

@@ -7,6 +7,7 @@ const clienteController = require('./controllers/clienteController');
 const arquivoController = require('./controllers/arquivoController');
 const documentoController = require('./controllers/documentoController');
 const tipoDocumentoController = require('./controllers/tipoDocumentoController');
+const tipoClienteController = require('./controllers/tipoClienteController');
 const logController = require('./controllers/logController');
 
 const { isAuth, isAdmin } = require('./middlewares/authMiddleware');
@@ -50,6 +51,12 @@ router.get('/tipo-doc', isAuth, tipoDocumentoController.listarTipoDocumentos);
 router.post('/tipo-doc', isAuth, isAdmin, tipoDocumentoController.criarTipoDocumento);
 router.put('/tipo-doc/:id', isAuth, isAdmin, tipoDocumentoController.atualizarTipoDocumento);
 router.delete('/tipo-doc/:id', isAuth, isAdmin, tipoDocumentoController.apagarTipoDocumento);
+
+// Tipo de Clientes (admin only, less list)
+router.get('/tipo-cli', isAuth, tipoClienteController.listarTipoClientes);
+router.post('/tipo-cli', isAuth, isAdmin, tipoClienteController.criarTipoCliente);
+router.put('/tipo-cli/:id', isAuth, isAdmin, tipoClienteController.atualizarTipoCliente);
+router.delete('/tipo-cli/:id', isAuth, isAdmin, tipoClienteController.apagarTipoCliente);
 
 // Logs
 router.get('/logs', logController.listarLogs);
