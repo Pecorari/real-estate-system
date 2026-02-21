@@ -9,6 +9,7 @@ const documentoController = require('./controllers/documentoController');
 const tipoDocumentoController = require('./controllers/tipoDocumentoController');
 const tipoClienteController = require('./controllers/tipoClienteController');
 const logController = require('./controllers/logController');
+const imovelController = require('./controllers/imovelController');
 
 const { isAuth, isAdmin } = require('./middlewares/authMiddleware');
 
@@ -28,6 +29,7 @@ router.delete('/usuarios/:id', isAuth, isAdmin, usuarioController.deletarUsuario
 // Clientes
 router.get('/clientes/resumo', isAuth, clienteController.getResumoClientes);
 router.get('/clientes', isAuth, clienteController.listarClientes);
+router.get('/clientes/:id', isAuth, clienteController.getCliente);
 router.post('/clientes', isAuth, clienteController.criarCliente);
 router.put('/clientes/:id', isAuth, clienteController.atualizarCliente);
 router.delete('/clientes/:id', isAuth, clienteController.deletarCliente);
@@ -46,17 +48,24 @@ router.get('/arquivos/:id/documentos', isAuth, documentoController.listarDocumen
 router.get('/arquivos/:id/documentos/:docId/download', isAuth, documentoController.downloadDocumento);
 router.delete('/arquivos/:id/documentos/:docId/delete', isAuth, documentoController.deletarDocumento);
 
+// Imoveis
+router.get('/imoveis', isAuth, imovelController.listarImoveis);
+router.get('/imoveis/:clienteId', isAuth, imovelController.getImoveisDisponiveisById);
+router.post('/imoveis', isAuth, imovelController.criarImovel);
+router.put('/imoveis/:id', isAuth, imovelController.atualizarImovel);
+router.delete('/imoveis/:id', isAuth, imovelController.deletarImovel);
+
 // Tipo de Documentos (admin only, less list)
 router.get('/tipo-doc', isAuth, tipoDocumentoController.listarTipoDocumentos);
 router.post('/tipo-doc', isAuth, isAdmin, tipoDocumentoController.criarTipoDocumento);
 router.put('/tipo-doc/:id', isAuth, isAdmin, tipoDocumentoController.atualizarTipoDocumento);
-router.delete('/tipo-doc/:id', isAuth, isAdmin, tipoDocumentoController.apagarTipoDocumento);
+router.delete('/tipo-doc/:id', isAuth, isAdmin, tipoDocumentoController.deletarTipoDocumento);
 
 // Tipo de Clientes (admin only, less list)
 router.get('/tipo-cli', isAuth, tipoClienteController.listarTipoClientes);
 router.post('/tipo-cli', isAuth, isAdmin, tipoClienteController.criarTipoCliente);
 router.put('/tipo-cli/:id', isAuth, isAdmin, tipoClienteController.atualizarTipoCliente);
-router.delete('/tipo-cli/:id', isAuth, isAdmin, tipoClienteController.apagarTipoCliente);
+router.delete('/tipo-cli/:id', isAuth, isAdmin, tipoClienteController.deletarTipoCliente);
 
 // Logs
 router.get('/logs', logController.listarLogs);

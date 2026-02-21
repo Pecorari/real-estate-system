@@ -66,7 +66,7 @@ async function atualizarTipoDocumento(req, res) {
     }
 };
 
-async function apagarTipoDocumento(req, res) {
+async function deletarTipoDocumento(req, res) {
     try {
         const { id } = req.params;
 
@@ -97,5 +97,5 @@ module.exports = {
     listarTipoDocumentos,
     criarTipoDocumento,
     atualizarTipoDocumento,
-    apagarTipoDocumento
+    deletarTipoDocumento
 }

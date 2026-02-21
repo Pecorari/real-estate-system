@@ -67,7 +67,7 @@ async function atualizarTipoCliente(req, res) {
     }
 };
 
-async function apagarTipoCliente(req, res) {
+async function deletarTipoCliente(req, res) {
     try {
         const { id } = req.params;
 
@@ -98,5 +98,5 @@ module.exports = {
     listarTipoClientes,
     criarTipoCliente,
     atualizarTipoCliente,
-    apagarTipoCliente
+    deletarTipoCliente
 }

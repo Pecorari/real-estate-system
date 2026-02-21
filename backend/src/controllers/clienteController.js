@@ -33,6 +33,74 @@ async function getResumoClientes(req, res) {
   }
 };
 
+async function getCliente(req, res) {
+  try {
+    const { id } = req.params;
+
+    const [rows] = await db.query(`
+      SELECT
+        c.id,
+        c.nome,
+        c.cpf_cnpj,
+        c.observacoes,
+
+        tc.id AS tipo_cliente_id,
+        tc.nome AS tipo_cliente_nome,
+
+        i.id AS imovel_id,
+        i.tipo_imovel,
+        i.descricao,
+        i.cep,
+        i.logradouro,
+        i.numero,
+        i.complemento,
+        i.bairro,
+        i.cidade,
+        i.estado,
+        i.area_m2,
+        i.status
+      FROM clientes c
+      JOIN tipo_clientes tc ON tc.id = c.tipo_cliente_id
+      LEFT JOIN imoveis i ON i.cliente_id = c.id
+      WHERE c.id = ?`, [id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Cliente não encontrado" });
+    }
+
+    const cliente = {
+      id: rows[0].id,
+      nome: rows[0].nome,
+      cpf_cnpj: formatCpfCnpj(rows[0].cpf_cnpj),
+      observacoes: rows[0].observacoes,
+      tipo_cliente: {
+        id: rows[0].tipo_cliente_id,
+        nome: rows[0].tipo_cliente_nome
+      },
+      imoveis: rows.filter(row => row.imovel_id).map(row => ({
+        id: row.imovel_id,
+        tipo_imovel: row.tipo_imovel,
+        descricao: row.descricao,
+        cep: row.cep,
+        logradouro: row.logradouro,
+        numero: row.numero,
+        complemento: row.complemento,
+        bairro: row.bairro,
+        cidade: row.cidade,
+        estado: row.estado,
+        area_m2: row.area_m2,
+        status: row.status
+      }))
+    };
+
+    return res.json({ cliente });
+  } catch (error) {
+    console.error("Erro listarClientes:", error);
+    res.status(500).json({ error: "Erro interno no servidor." });
+  }
+}
+
 async function listarClientes(req, res) {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -244,7 +312,7 @@ async function deletarCliente(req, res) {
   
     if (error.code === "ER_ROW_IS_REFERENCED_2") {
       return res.status(409).json({
-        error: "Este cliente está vinculado a um ou mais arquivos e não pode ser removido."
+        error: "Este cliente está vinculado a um ou mais arquivos/imoveis e não pode ser removido."
       });
     }
     
@@ -255,6 +323,7 @@ async function deletarCliente(req, res) {
 module.exports = {
   getResumoClientes,
   listarClientes,
+  getCliente,
   criarCliente,
   atualizarCliente,
   deletarCliente
