@@ -10,8 +10,9 @@ import { Button } from "../../components/ui/Button";
 import Modal from "../../components/ui/Modal";
 import maskCpfCnpj from '../../utils/formatarCpfCnpj';
 import api from "../../hooks/useApi";
-import { FaUserPlus, FaEdit, FaTrash, FaArrowLeft, FaArrowRight } from "react-icons/fa";
+import { FaUserPlus, FaLongArrowAltRight, FaArrowLeft, FaArrowRight } from "react-icons/fa";
 import titleCase from "../../utils/formatarTitleCase";
+import { useNavigate } from "react-router-dom";
 
 export default function Clientes() {
   const [clientes, setClientes] = useState([]);
@@ -23,16 +24,15 @@ export default function Clientes() {
   const [totalPages, setTotalPages] = useState(1);
   const limit = 10;
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalDeleteOpen, setModalDeleteOpen] = useState(false);
   const [form, setForm] = useState({
     nome: "",
     cpf_cnpj: "",
     tipo_cliente_id: "",
     observacoes: ""
   });
-  const [editId, setEditId] = useState(null);
-  const [deleteId, setDeleteId] = useState(null);
   const [erro, setErro] = useState("");
+
+  const navigate = useNavigate();
 
   const carregarClientes = async (pageAtual = page) => {
     setLoading(true);
@@ -89,7 +89,6 @@ export default function Clientes() {
   }, []);
 
   const abrirCriar = () => {
-    setEditId(null);
     setErro("");
     setForm({
       nome: "",
@@ -100,27 +99,11 @@ export default function Clientes() {
     setModalOpen(true);
   };
 
-  const abrirEditar = (cliente) => {
-    setEditId(cliente.id);
-    setErro("");
-    setForm({
-      nome: cliente.nome,
-      cpf_cnpj: cliente.cpf_cnpj,
-      tipo_cliente_id: cliente.tipo_cliente.id,
-      observacoes: cliente.observacoes,
-    });
-    setModalOpen(true);
-  };
-
   const salvarCliente = async (e) => {
     e.preventDefault();
 
     try {
-      if (editId) {
-        await api.put(`/clientes/${editId}`, form);
-      } else {
-        await api.post("/clientes", form);
-      }
+      await api.post("/clientes", form);
 
       setModalOpen(false);
       carregarClientes();
@@ -128,18 +111,6 @@ export default function Clientes() {
       const mensagem = err?.response?.data?.error || "Erro ao salvar cliente.";
       setErro(mensagem);
       console.log("Erro ao salvar cliente:", err);
-    }
-  };
-
-  const deletarCliente = async () => {
-    try {
-      await api.delete(`/clientes/${deleteId}`);
-      setModalDeleteOpen(false);
-      carregarClientes();
-    } catch (err) {
-      const mensagem = err?.response?.data?.error || "Erro ao deletar cliente.";
-      setErro(mensagem);
-      console.log("Erro ao deletar cliente:", err);
     }
   };
 
@@ -166,12 +137,14 @@ export default function Clientes() {
 
         <div className="p-6 flex-1">
           <Card>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
-              <h2 className="text-2xl font-bold text-center sm:text-left">
+            <div className="flex flex-row items-center justify-between gap-2 mb-6">
+              <h2 className="text-2xl font-bold text-left">
                 Clientes
               </h2>
-
-              <Button onClick={abrirCriar} className="w-auto"><FaUserPlus /> Cadastrar Cliente</Button>
+              <Button onClick={abrirCriar} className="w-min">
+                <FaUserPlus />
+                <span className="hidden md:inline">Cadastrar Cliente</span>
+              </Button>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 mb-6 w-full sm:w-auto max-w-3xl">
@@ -204,42 +177,16 @@ export default function Clientes() {
               <p>Carregando...</p>
             ) : (
               <>
-                <Table columns={["ID", "Nome", "CPF/CNPJ", "Tipo", "Observações", "Ações"]}
+                <Table columns={["ID", "Nome", "CPF/CNPJ", "Tipo", "Observações", ""]}
                   data={clientes.map((c) => ({
                     id: c.id,
                     nome: c.nome,
                     cpf_cnpj: c.cpf_cnpj,
                     tipo: c.tipo_cliente?.nome || "-",
                     observacoes: c.observacoes,
-                    ações: (
-                      <div className="flex gap-4">
-                        <button
-                          className="text-blue-600 hover:underline"
-                          onClick={() => abrirEditar(c)}
-                        >
-                          <FaEdit
-                            className="text-blue-600 hover:text-blue-800 cursor-pointer"
-                            size={20}
-                            title="Editar Clientes"
-                          />
-                        </button>
-                        <p className="text-gray-400"> | </p>
-                        <button
-                          className="text-red-600 hover:underline"
-                          onClick={() => {
-                            setDeleteId(c.id);
-                            setModalDeleteOpen(true);
-                          }}
-                        >
-                          <FaTrash
-                            className="text-red-500 hover:text-red-800 cursor-pointer"
-                            size={20}
-                            title="Deletar Clientes"
-                          />
-                        </button>
-                      </div>
-                    ),
+                    detalhe: <span className="text-lg text-gray-500 hover:text-blue-700 transition-colors"><FaLongArrowAltRight /></span>,
                   }))}
+                  onRowClick={(row) => navigate(`/clientes/${row.id}`)}
                 />
                 <div className="flex justify-center items-center gap-3 mt-4">
                   <button
@@ -272,7 +219,7 @@ export default function Clientes() {
 
       <Modal isOpen={modalOpen} onClose={() => {setModalOpen(false); setErro("");}}>
         <h2 className="text-lg font-semibold mb-3">
-          {editId ? "Editar Cliente" : "Novo Cliente"}
+          Novo Cliente
         </h2>
 
         <form onSubmit={salvarCliente}>
@@ -315,27 +262,6 @@ export default function Clientes() {
             Salvar
           </Button>
         </form>
-      </Modal>
-
-      <Modal isOpen={modalDeleteOpen} onClose={() => {setModalDeleteOpen(false); setErro("");}}>
-        <h2 className="text-lg font-semibold mb-3">Excluir cliente?</h2>
-        <p>Essa ação não poderá ser desfeita.</p>
-        {erro && (<div className="bg-red-100 text-red-700 text-sm p-2 rounded mb-3">{erro}</div>)}
-        <div className="flex gap-2 mt-4">
-          <Button
-            className="bg-gray-400 hover:bg-gray-500"
-            onClick={() => {setModalDeleteOpen(false); setErro("")}}
-          >
-            Cancelar
-          </Button>
-
-          <Button
-            className="bg-red-600 hover:bg-red-700"
-            onClick={deletarCliente}
-          >
-            Deletar
-          </Button>
-        </div>
       </Modal>
     </div>
   );

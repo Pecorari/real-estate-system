@@ -15,6 +15,7 @@ export default function Sidebar() {
   const links = [
     { path: "/dashboard", label: "Dashboard" },
     { path: "/clientes", label: "Clientes" },
+    { path: "/imoveis", label: "Imoveis" },
     { path: "/arquivos", label: "Arquivos" },
   ];
 

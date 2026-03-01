@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import api from "../../hooks/useApi";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import { FaPlus } from "react-icons/fa6";
 import titleCase from "../../utils/formatarTitleCase";
 import Card from "../../components/ui/Card";
 import Input from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 import Table from "../../components/ui/Table";
 import Modal from "../../components/ui/Modal";
-
 import Navbar from "../../components/layout/Navbar";
 import Sidebar from "../../components/layout/Sidebar";
 import Footer from "../../components/layout/Footer";
@@ -91,9 +91,12 @@ export default function TipoCliente() {
                 <Navbar />
                 <main className="p-6 flex-1">
                     <Card>
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-                            <h1 className="text-2xl font-bold text-center sm:text-left">Tipos de Cliente</h1>
-                            <Button onClick={abrirCriar} className="w-auto">+ Novo Tipo</Button>
+                        <div className="flex flex-row items-center justify-between gap-4 mb-6">
+                            <h1 className="text-xl sm:text-2xl font-bold text-left">Tipos de Cliente</h1>
+                            <Button onClick={abrirCriar} className="w-min">
+                                <FaPlus />
+                                <span className="hidden md:inline">Novo Tipo</span>
+                            </Button>
                         </div>
 
                         {loading ? (

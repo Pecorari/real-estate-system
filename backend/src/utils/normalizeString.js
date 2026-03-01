@@ -9,6 +9,4 @@ function normalizeString(str) {
     .replace(/\s+/g, ' ');
 }
 
-module.exports = {
-  normalizeString
-};
+module.exports = normalizeString;

@@ -37,7 +37,8 @@ router.delete('/clientes/:id', isAuth, clienteController.deletarCliente);
 // Arquivos
 router.get('/arquivos/resumo', isAuth, arquivoController.getResumoArquivos);
 router.get('/arquivos', isAuth, arquivoController.listarArquivos);
-router.get('/arquivos/:id', isAuth, arquivoController.detalharArquivo);
+router.get('/arquivos/:clienteId', isAuth, arquivoController.listarArquivosById);
+router.get('/arquivo/:id', isAuth, arquivoController.detalharArquivo);
 router.post('/arquivos', isAuth, arquivoController.criarArquivo);
 router.put('/arquivos/:id', isAuth, arquivoController.atualizarArquivo);
 router.delete('/arquivos/:id', isAuth, arquivoController.deletarArquivo);
@@ -49,6 +50,7 @@ router.get('/arquivos/:id/documentos/:docId/download', isAuth, documentoControll
 router.delete('/arquivos/:id/documentos/:docId/delete', isAuth, documentoController.deletarDocumento);
 
 // Imoveis
+router.get('/imoveis/resumo', isAuth, imovelController.getResumoImoveis);
 router.get('/imoveis', isAuth, imovelController.listarImoveis);
 router.get('/imoveis/:clienteId', isAuth, imovelController.getImoveisDisponiveisById);
 router.post('/imoveis', isAuth, imovelController.criarImovel);

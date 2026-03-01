@@ -36,9 +36,16 @@ async function listarArquivos(req, res) {
           locador.nome LIKE ?
           OR locatario.nome LIKE ?
           OR a.id LIKE ?
+          OR CONCAT(
+            imovel.logradouro, ' ',
+            imovel.numero, ' ',
+            imovel.bairro, ' ',
+            imovel.cidade, ' ',
+            imovel.estado
+          ) LIKE ?
         )
       `;
-      params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+      params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`);
     }
 
     if (status) {
@@ -53,6 +60,7 @@ async function listarArquivos(req, res) {
       FROM arquivos a
       LEFT JOIN clientes locador ON locador.id = a.cliente_locador_id
       LEFT JOIN clientes locatario ON locatario.id = a.cliente_locatario_id
+      LEFT JOIN imoveis imovel ON imovel.id = a.imovel_locado_id
       ${where}
       `,
       params
@@ -64,10 +72,18 @@ async function listarArquivos(req, res) {
       SELECT 
         a.*,
         locador.nome AS locador_nome,
-        locatario.nome AS locatario_nome
+        locatario.nome AS locatario_nome,
+        CONCAT(
+          imovel.logradouro, ' n°',
+          imovel.numero, ' - ',
+          imovel.bairro, ', ',
+          imovel.cidade, '/', 
+          imovel.estado
+        ) AS imovel_locado
       FROM arquivos a
       LEFT JOIN clientes locador ON locador.id = a.cliente_locador_id
       LEFT JOIN clientes locatario ON locatario.id = a.cliente_locatario_id
+      LEFT JOIN imoveis imovel ON imovel.id = a.imovel_locado_id
       ${where}
       ORDER BY a.id DESC
       LIMIT ? OFFSET ?
@@ -90,14 +106,57 @@ async function listarArquivos(req, res) {
   }
 }
 
+async function listarArquivosById(req, res) {
+    try {
+        const { clienteId } = req.params;
+
+        const [rows] = await db.execute(`
+          SELECT
+            a.*,
+            locador.nome AS locador_nome,
+            locatario.nome AS locatario_nome,
+            CONCAT(
+              imovel.logradouro, ' n°',
+              imovel.numero, ' - ',
+              imovel.bairro, ', ',
+              imovel.cidade, '/', 
+              imovel.estado
+            ) AS imovel_locado
+          FROM arquivos a
+          LEFT JOIN clientes locador ON locador.id = a.cliente_locador_id
+          LEFT JOIN clientes locatario ON locatario.id = a.cliente_locatario_id
+          LEFT JOIN imoveis imovel ON imovel.id = a.imovel_locado_id
+          WHERE cliente_locador_id = ?
+          ORDER BY id ASC`, [clienteId]
+        );
+
+        return res.json(rows);
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Erro no servidor, ao listar arquivos' });
+    }
+};
+
 async function detalharArquivo(req, res) {
   try {
     const { id } = req.params;
 
-    const [rows] = await db.query(`SELECT a.*, locador.nome AS locador_nome, locatario.nome AS locatario_nome
+    const [rows] = await db.query(`
+      SELECT
+        a.*,
+        locador.nome AS locador_nome,
+        locatario.nome AS locatario_nome,
+        CONCAT(
+          imovel.logradouro, ' n°',
+          imovel.numero, ' - ',
+          imovel.bairro, ', ',
+          imovel.cidade, '/', 
+          imovel.estado
+        ) AS imovel_locado
       FROM arquivos a
       LEFT JOIN clientes locador ON locador.id = a.cliente_locador_id
       LEFT JOIN clientes locatario ON locatario.id = a.cliente_locatario_id
+      LEFT JOIN imoveis imovel ON imovel.id = a.imovel_locado_id
       WHERE a.id = ?`, [id]
     );
 
@@ -112,16 +171,16 @@ async function detalharArquivo(req, res) {
 
 async function criarArquivo(req, res) {
   try {
-    const { cliente_locador_id, cliente_locatario_id, data_inicio, data_fim, status, observacoes } = req.body;
+    const { cliente_locador_id, cliente_locatario_id, imovel_locado_id, data_inicio, data_fim, status, observacoes } = req.body;
 
-    if (!cliente_locador_id || !cliente_locatario_id || !data_inicio) {
+    if (!cliente_locador_id || !cliente_locatario_id || !imovel_locado_id || !data_inicio) {
       return res.status(400).json({
-        error: "Campos obrigatórios: cliente_locador_id, cliente_locatario_id, data_inicio."
+        error: "Campos obrigatórios: cliente_locador_id, cliente_locatario_id, imovel_locado_id, data_inicio."
       });
     }
 
-    const [result] = await db.query(`INSERT INTO arquivos (cliente_locador_id, cliente_locatario_id, data_inicio, data_fim, status, observacoes) VALUES (?, ?, ?, ?, ?, ?)`,
-      [cliente_locador_id, cliente_locatario_id, data_inicio, data_fim || null, status, observacoes || null]
+    const [result] = await db.query(`INSERT INTO arquivos (cliente_locador_id, cliente_locatario_id, imovel_locado_id, data_inicio, data_fim, status, observacoes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [cliente_locador_id, cliente_locatario_id, imovel_locado_id, data_inicio, data_fim || null, status, observacoes || null]
     );
 
     await createLog({
@@ -143,13 +202,13 @@ async function atualizarArquivo(req, res) {
   try {
     const { id } = req.params;
 
-    const { cliente_locador_id, cliente_locatario_id, data_inicio, data_fim, status, observacoes } = req.body;
+    const { cliente_locador_id, cliente_locatario_id, imovel_locado_id, data_inicio, data_fim, status, observacoes } = req.body;
 
     const [existe] = await db.query("SELECT * FROM arquivos WHERE id = ?", [id]);
     if (existe.length === 0) return res.status(404).json({ error: "Arquivo não encontrado." });
 
-    await db.query(`UPDATE arquivos SET cliente_locador_id=?, cliente_locatario_id=?, data_inicio=?, data_fim=?, status=?, observacoes=? WHERE id=?`,
-      [cliente_locador_id, cliente_locatario_id, data_inicio, data_fim || null, status, observacoes || null, id]
+    await db.query(`UPDATE arquivos SET cliente_locador_id=?, cliente_locatario_id=?, imovel_locado_id=?, data_inicio=?, data_fim=?, status=?, observacoes=? WHERE id=?`,
+      [cliente_locador_id, cliente_locatario_id, imovel_locado_id, data_inicio, data_fim || null, status, observacoes || null, id]
     );
 
     await createLog({
@@ -194,6 +253,7 @@ async function deletarArquivo(req, res) {
 module.exports = {
   getResumoArquivos,
   listarArquivos,
+  listarArquivosById,
   detalharArquivo,
   criarArquivo,
   atualizarArquivo,

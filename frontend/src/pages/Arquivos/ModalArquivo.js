@@ -12,9 +12,11 @@ export default function ModalArquivo({ open, onClose, onCreated, arquivo }) {
   const [listaLocadorBusca, setListaLocadorBusca] = useState([]);
   const [buscaLocatario, setBuscaLocatario] = useState("");
   const [listaLocatarioBusca, setListaLocatarioBusca] = useState([]);
+  const [imoveisDisponiveis, setImoveisDisponiveis] = useState([]);
   const [form, setForm] = useState({
     cliente_locador_id: "",
     cliente_locatario_id: "",
+    imovel_locado_id: "",
     data_inicio: "",
     data_fim: "",
     status: "ativo",
@@ -54,7 +56,7 @@ export default function ModalArquivo({ open, onClose, onCreated, arquivo }) {
       });
 
       const filtrados = data.data.filter(
-        (c) => c.tipo_cliente.nome === 'locador' || c.tipo_cliente.nome === 'locador e  locatario'
+        (c) => c.tipo_cliente.nome === 'locador' || c.tipo_cliente.nome === 'ambos'
       );
 
       setListaLocadorBusca(filtrados);
@@ -62,7 +64,6 @@ export default function ModalArquivo({ open, onClose, onCreated, arquivo }) {
       setListaLocadorBusca([]);
     }
   };
-
 
   const pesquisarLocatario = async (value) => {
     const q = tratarBuscaCpfNome(value, setBuscaLocatario);
@@ -78,7 +79,7 @@ export default function ModalArquivo({ open, onClose, onCreated, arquivo }) {
       });
 
       const filtrados = data.data.filter(
-        (c) => c.tipo_cliente.nome === 'locatario' || c.tipo_cliente.nome === 'locador e locatario'
+        (c) => c.tipo_cliente.nome === 'locatario' || c.tipo_cliente.nome === 'ambos'
       );
 
       setListaLocatarioBusca(filtrados);
@@ -93,6 +94,7 @@ export default function ModalArquivo({ open, onClose, onCreated, arquivo }) {
       setForm({
         cliente_locador_id: arquivo.cliente_locador_id || "",
         cliente_locatario_id: arquivo.cliente_locatario_id || "",
+        imovel_locado_id: arquivo.imovel_locado_id || "",
         data_inicio: arquivo.data_inicio ? arquivo.data_inicio.split("T")[0] : "",
         data_fim: arquivo.data_fim ? arquivo.data_fim.split("T")[0] : "",
         status: arquivo.status || "ativo",
@@ -106,6 +108,7 @@ export default function ModalArquivo({ open, onClose, onCreated, arquivo }) {
       setForm({
         cliente_locador_id: "",
         cliente_locatario_id: "",
+        imovel_locado_id: "",
         data_inicio: "",
         data_fim: "",
         status: "ativo",
@@ -124,6 +127,27 @@ export default function ModalArquivo({ open, onClose, onCreated, arquivo }) {
       setListaLocatarioBusca([]);
     }
   }, [open]);
+
+  useEffect(() => {
+    if (!form.cliente_locador_id) {
+      setImoveisDisponiveis([]);
+      return;
+    }
+
+    buscarImoveis();
+    // eslint-disable-next-line
+  }, [form.cliente_locador_id]);
+
+  const buscarImoveis = async () => {
+    try {
+      const { data } = await api.get(`/imoveis/${form.cliente_locador_id}`);
+
+      setImoveisDisponiveis(data);
+    } catch (err) {
+      console.error(err);
+      setImoveisDisponiveis([]);
+    }
+  };
 
   const atualizar = (campo, valor) => {
     setForm({ ...form, [campo]: valor });
@@ -211,6 +235,22 @@ export default function ModalArquivo({ open, onClose, onCreated, arquivo }) {
           </div>
         )}
       </div>
+
+      <Select
+        label="Imóvel"
+        required
+        value={form.imovel_locado_id || ""}
+        onChange={(e) => atualizar("imovel_locado_id", e.target.value)}
+        disabled={!imoveisDisponiveis.length}
+      >
+        <option value="">Selecione um imóvel</option>
+
+        {imoveisDisponiveis.map((imovel) => (
+          <option key={imovel.id} value={imovel.id}>
+            {imovel.logradouro} n°{imovel.numero} - {imovel.bairro}
+          </option>
+        ))}
+      </Select>
 
       <Input
         label="Data Início"

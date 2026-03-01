@@ -14,7 +14,10 @@ export default function Navbar() {
           className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-800 transition flex flex-row items-center gap-2"
           onClick={() => logout()}
         >
-          <MdLogout size={20}/> Logout
+          <MdLogout size={20}/>
+          <span className="hidden sm:inline">
+            Logout
+          </span>
         </button>
       </div>
     </header>

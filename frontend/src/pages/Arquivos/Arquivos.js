@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaLongArrowAltRight } from "react-icons/fa";
 import Navbar from "../../components/layout/Navbar";
 import Sidebar from "../../components/layout/Sidebar";
 import Footer from "../../components/layout/Footer";
@@ -66,6 +65,21 @@ export default function Arquivos() {
     // eslint-disable-next-line
   }, [search, status]);
 
+  const statusStyles = {
+    ativo: {
+      bg: "bg-green-400",
+      text: "text-green-700",
+    },
+    encerrado: {
+      bg: "bg-red-400",
+      text: "text-red-700",
+    },
+    inadimplente: {
+      bg: "bg-yellow-400",
+      text: "text-yellow-700",
+    },
+  };
+
   return (
     <div className="flex h-screen bg-gray-100">
       <Sidebar />
@@ -75,9 +89,14 @@ export default function Arquivos() {
 
         <div className="p-6 flex-1">
           <Card>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-              <h2 className="text-2xl font-bold text-center sm:text-left">Arquivos</h2>
-              <Button onClick={() => setModalOpen(true)} className="w-auto"><FaFolderPlus /> Adicionar Arquivo</Button>
+            <div className="flex flex-row items-center justify-between gap-4 mb-6">
+              <h2 className="text-2xl font-bold text-center sm:text-left">
+                Arquivos
+              </h2>
+              <Button onClick={() => setModalOpen(true)} className="w-min">
+                <FaFolderPlus />
+                <span className="hidden md:inline">Adicionar Arquivo</span>
+              </Button>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 mb-6 w-full sm:w-auto max-w-3xl">
@@ -109,13 +128,17 @@ export default function Arquivos() {
             ) : (
               <>
                 <Table
-                  columns={["ID", "Locador", "Locatário", "Status", ""]}
+                  columns={["ID", "Locador", "Locatário", "Imovel", "Status"]}
                   data={arquivos.map((arq) => ({
                     id: arq.id,
                     locador: arq.locador_nome,
                     locatario: arq.locatario_nome,
-                    status: arq.status || "—",
-                    detalhe: <span className="text-lg text-gray-500 hover:text-blue-700 transition-colors"><FaLongArrowAltRight /></span>
+                    Imovel: arq.imovel_locado,
+                    status: 
+                      <div className="flex gap-2">
+                        <span className={`px-2 py-0 rounded-full ${statusStyles[arq.status]?.bg || "bg-green-300"}`} />
+                        <p className={`text-xs ${statusStyles[arq.status]?.text || "text-green-700"}`}>{arq.status}</p>
+                      </div>
                   }))}
                   onRowClick={(row) => navigate(`/arquivos/${row.id}`)}
                 />

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import api from "../../hooks/useApi";
-
 import Card from "../../components/ui/Card";
 import Input from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
@@ -8,6 +7,7 @@ import Table from "../../components/ui/Table";
 import Modal from "../../components/ui/Modal";
 import Select from "../../components/ui/Select";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import { FaPlus } from "react-icons/fa6";
 import Navbar from "../../components/layout/Navbar";
 import Sidebar from "../../components/layout/Sidebar";
 import Footer from "../../components/layout/Footer";
@@ -106,9 +106,12 @@ export default function Usuarios() {
 
         <main className="p-6 flex-1">
           <Card>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-              <h1 className="text-2xl font-bold text-center sm:text-left">Usuários</h1>
-              <Button onClick={abrirCriar} className="w-auto">+ Novo Usuário</Button>
+            <div className="flex flex-row items-center justify-between gap-4 mb-6">
+              <h1 className="text-2xl font-bold text-left">Usuários</h1>
+              <Button onClick={abrirCriar} className="w-min">
+                <FaPlus />
+                <span className="hidden md:inline">Novo Usuário</span>
+              </Button>
             </div>
 
             {loading ? (

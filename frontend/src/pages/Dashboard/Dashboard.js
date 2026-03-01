@@ -19,6 +19,9 @@ const Dashboard = () => {
     locadores: 0,
     locatarios: 0,
   });
+  const [resumoImoveis, setResumoImoveis] = useState({
+    total: 0
+  });
 
   useEffect(() => {
     const fetchResumoArquivos = async () => {
@@ -39,8 +42,18 @@ const Dashboard = () => {
       }
     };
 
+    const fetchResumoImoveis = async () => {
+      try {
+        const { data } = await api.get("/imoveis/resumo");
+        setResumoImoveis(data);
+      } catch (err) {
+        console.log("Erro:", err);
+      }
+    };
+
     fetchResumoArquivos();
     fetchResumoClientes();
+    fetchResumoImoveis();
   }, []);
 
   const dataBar = [
@@ -60,7 +73,7 @@ const Dashboard = () => {
           <div className="p-6 flex-1">
             <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
               <Card className="transform transition duration-300 hover:scale-101">
                 <h2 className="text-lg font-semibold">Total de Clientes</h2>
                 <p className="text-2xl font-bold mt-2">{resumoClientes.total}</p>
@@ -72,6 +85,10 @@ const Dashboard = () => {
               <Card className="transform transition duration-300 hover:scale-101">
                 <h2 className="text-lg font-semibold">Locatários</h2>
                 <p className="text-2xl font-bold mt-2">{resumoClientes.locatarios}</p>
+              </Card>
+              <Card className="transform transition duration-300 hover:scale-101">
+                <h2 className="text-lg font-semibold">Total de Imoveis</h2>
+                <p className="text-2xl font-bold mt-2">{resumoImoveis.total}</p>
               </Card>
             </div>
 

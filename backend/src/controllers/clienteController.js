@@ -49,7 +49,6 @@ async function getCliente(req, res) {
 
         i.id AS imovel_id,
         i.tipo_imovel,
-        i.descricao,
         i.cep,
         i.logradouro,
         i.numero,
@@ -81,7 +80,6 @@ async function getCliente(req, res) {
       imoveis: rows.filter(row => row.imovel_id).map(row => ({
         id: row.imovel_id,
         tipo_imovel: row.tipo_imovel,
-        descricao: row.descricao,
         cep: row.cep,
         logradouro: row.logradouro,
         numero: row.numero,

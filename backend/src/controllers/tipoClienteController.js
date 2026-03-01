@@ -1,6 +1,6 @@
 const db = require('../config/db_connection');
 const { createLog } = require("./logController");
-const { normalizeString } = require("../utils/formatStrg");
+const { normalizeString } = require("../utils/normalizeString");
 
 async function listarTipoClientes(req, res) {
     try {
@@ -9,7 +9,7 @@ async function listarTipoClientes(req, res) {
         return res.json(rows);
     } catch (err) {
         console.error(err);
-        return res.status(500).json({ error: 'Erro no servidor.' });
+        return res.status(500).json({ error: err.message || 'Erro no servidor.' });
     }
 };
 
@@ -17,7 +17,7 @@ async function criarTipoCliente(req, res) {
     try {
         const { nome } = req.body;
         
-        if (!nome || nome.trim() === '') return res.status(400).json({ error: 'O campo "nome" é obrigatório.' });
+        if (!nome || nome.trim() === '') throw new Error(`O campo "nome" é obrigatório.`);
 
         const [result] = await db.execute('INSERT INTO tipo_clientes (nome) VALUES (?)', [normalizeString(nome)]);
 
@@ -32,7 +32,7 @@ async function criarTipoCliente(req, res) {
         return res.status(201).json({ id: result.insertId, nome: nome.trim() });
     } catch (err) {
         console.error(err);
-        return res.status(500).json({ error: 'Erro no servidor.' });
+        return res.status(500).json({ error: err.message || 'Erro no servidor.' });
     }
 };
 
@@ -41,15 +41,12 @@ async function atualizarTipoCliente(req, res) {
         const { id } = req.params;
         const { nome } = req.body;
 
-        if (!id) return res.status(400).json({ error: 'ID é obrigatório.' });
+        if (!id) throw new Error("ID é obrigatório.");
+        if (!nome || nome.trim() === '') throw new Error(`O campo "nome" é obrigatório.`);
 
-        if (!nome || nome.trim() === '') return res.status(400).json({ error: 'O campo "nome" é obrigatório.' });
+        const [result] = await db.execute('UPDATE tipo_clientes SET nome = ? WHERE id = ?', [normalizeString(nome), id]);
 
-        const [result] = await db.execute('UPDATE tipo_clientes SET nome = ? WHERE id = ?', [nome.trim(), id]);
-
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: 'Tipo de cliente não encontrado.' });
-        }
+        if (result.affectedRows === 0) throw new Error("Tipo de cliente não encontrado.");
 
         await createLog({
             usuario_id: req.usuario.id,
@@ -63,7 +60,7 @@ async function atualizarTipoCliente(req, res) {
         return res.json({ message: 'Tipo de cliente atualizado com sucesso.' });
     } catch (err) {
         console.error(err);
-        return res.status(500).json({ error: 'Erro no servidor.' });
+        return res.status(500).json({ error: err.message || 'Erro no servidor.' });
     }
 };
 
@@ -71,13 +68,11 @@ async function deletarTipoCliente(req, res) {
     try {
         const { id } = req.params;
 
-        if (!id) return res.status(400).json({ error: 'ID é obrigatório.' });
+        if (!id) throw new Error("ID é obrigatório.");
 
         const [result] = await db.execute('DELETE FROM tipo_clientes WHERE id = ?', [id]);
 
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: 'Tipo de cliente não encontrado.' });
-        }
+        if (result.affectedRows === 0) throw new Error("Tipo de cliente não encontrado.");
 
         await createLog({
             usuario_id: req.usuario.id,
@@ -90,7 +85,7 @@ async function deletarTipoCliente(req, res) {
         return res.json({ message: 'Tipo de cliente deletado com sucesso.' });
     } catch (err) {
         console.error(err);
-        return res.status(500).json({ error: 'Erro no servidor.' });
+        return res.status(500).json({ error: err.message || 'Erro no servidor.' });
     }
 };
 

@@ -23,7 +23,7 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = "ma
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className={`bg-white rounded-2xl shadow-xl w-full ${maxWidth} mx-4 p-6 relative`}
+            className={`bg-white rounded-2xl shadow-xl w-full ${maxWidth} mx-4 p-6 relative max-h-[90vh] overflow-y-auto`}
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}

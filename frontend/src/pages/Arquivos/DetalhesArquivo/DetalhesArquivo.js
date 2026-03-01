@@ -59,7 +59,7 @@ export default function ArquivoDetalhe() {
   const carregarArquivo = async () => {
     try {
       setLoading(true);
-      const { data } = await api.get(`/arquivos/${id}`);
+      const { data } = await api.get(`/arquivo/${id}`);
       setArquivo(data);
     } catch (err) {
       console.error("Erro ao carregar arquivo:", err);
@@ -230,7 +230,7 @@ export default function ArquivoDetalhe() {
               <div className="flex items-center justify-between">
                 <button
                   className="text-gray-600 hover:text-gray-800 font-bold flex items-center"
-                  onClick={() => navigate("/arquivos")}
+                  onClick={() => navigate(-1)}
                 >
                   <FaArrowLeft className="mr-2" />
                   Voltar
@@ -262,19 +262,35 @@ export default function ArquivoDetalhe() {
               <div className="space-y-2">
                 <p>
                   <strong>Locador:</strong>{" "}
-                  <span className="text-gray-700">{arquivo.locador_nome}</span>
+                  <span className="text-gray-700 cursor-pointer relative after:absolute after:left-0 after:-bottom-0.5 after:h-[1px] after:w-0 after:bg-blue-600 after:transition-all hover:after:w-full hover:text-blue-600"
+                    onClick={() => navigate(`/clientes/${arquivo.cliente_locador_id}`)}
+                  >
+                      {arquivo.locador_nome}
+                  </span>
                 </p>
                 <p>
                   <strong>Locatário:</strong>{" "}
-                  <span className="text-gray-700">{arquivo.locatario_nome}</span>
+                  <span className="text-gray-700 cursor-pointer relative after:absolute after:left-0 after:-bottom-0.5 after:h-[1px] after:w-0 after:bg-blue-600 after:transition-all hover:after:w-full hover:text-blue-600"
+                    onClick={() => navigate(`/clientes/${arquivo.cliente_locatario_id}`)}
+                  >
+                      {arquivo.locatario_nome}
+                  </span>
                 </p>
                 <p>
-                  <strong>Status:</strong>{" "}
-                  <span className="text-gray-700">{capitalize(arquivo.status)}</span>
+                  <strong>Imovel:</strong>{" "}
+                  <span className="text-gray-700 cursor-pointer relative after:absolute after:left-0 after:-bottom-0.5 after:h-[1px] after:w-0 after:bg-blue-600 after:transition-all hover:after:w-full hover:text-blue-600"
+                    onClick={() => navigate(`/clientes/${arquivo.cliente_locador_id}`)}
+                  >
+                      {arquivo.imovel_locado}
+                  </span>
                 </p>
               </div>
 
               <div className="space-y-2">
+                <p>
+                  <strong>Status:</strong>{" "}
+                  <span className="text-gray-700">{capitalize(arquivo.status)}</span>
+                </p>
                 <p>
                   <strong>Data Início:</strong>{" "}
                   <span className="text-gray-700">
@@ -298,16 +314,15 @@ export default function ArquivoDetalhe() {
           </Card>
 
           <Card>
-            <h3 className="text-lg font-semibold mb-4">Documentos</h3>
+            <div className="mb-6 flex justify-between">
+              <h3 className="text-lg font-semibold mb-4">Documentos</h3>
 
-            <div className="flex justify-end mb-4">
-              <Button
-                className="flex items-center gap-2"
-                onClick={() => setModalUploadOpen(true)}
-              >
-                <FaUpload />
-                Adicionar Documento
-              </Button>
+              <div className="flex justify-end mb-4">
+                <Button className="flex items-center gap-2" onClick={() => setModalUploadOpen(true)}>
+                  <FaUpload />
+                  <span className="hidden sm:inline">Adicionar Documento</span>
+                </Button>
+              </div>
             </div>
 
             <Table
@@ -321,7 +336,7 @@ export default function ArquivoDetalhe() {
           <div className="space-y-4">
 
             <Select label="Tipo do Documento" value={tipoSelecionado} onChange={(e) => setTipoSelecionado(e.target.value)}>
-              <option value="">Selecione o tipo de Documento</option>
+              <option value="">Tipo de Documento</option>
               {tiposDocumento.map((tipo) => (
                 <option key={tipo.id} value={tipo.id}>{tipo.nome}</option>
               ))}
@@ -381,9 +396,9 @@ export default function ArquivoDetalhe() {
                 Cancelar
               </button>
 
-              <Button
-                disabled={!uploadFile || !tipoSelecionado || uploading}
+              <Button disabled={!uploadFile || !tipoSelecionado || uploading}
                 onClick={handleUploadDocumento}
+                className="text-xs sm:text-base w-max"
               >
                 {uploading ? "Enviando..." : "Enviar Documento"}
               </Button>
