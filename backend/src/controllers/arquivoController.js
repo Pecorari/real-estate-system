@@ -36,16 +36,14 @@ async function listarArquivos(req, res) {
           locador.nome LIKE ?
           OR locatario.nome LIKE ?
           OR a.id LIKE ?
-          OR CONCAT(
-            imovel.logradouro, ' ',
-            imovel.numero, ' ',
-            imovel.bairro, ' ',
-            imovel.cidade, ' ',
-            imovel.estado
-          ) LIKE ?
+          OR imovel.logradouro LIKE ?
+          OR imovel.numero LIKE ?
+          OR imovel.bairro LIKE ?
+          OR imovel.cidade LIKE ?
+          OR imovel.estado LIKE ?
         )
       `;
-      params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`);
+      params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`);
     }
 
     if (status) {
@@ -73,13 +71,11 @@ async function listarArquivos(req, res) {
         a.*,
         locador.nome AS locador_nome,
         locatario.nome AS locatario_nome,
-        CONCAT(
-          imovel.logradouro, ' n°',
-          imovel.numero, ' - ',
-          imovel.bairro, ', ',
-          imovel.cidade, '/', 
-          imovel.estado
-        ) AS imovel_locado
+        imovel.logradouro,
+        imovel.numero,
+        imovel.bairro,
+        imovel.cidade,
+        imovel.estado
       FROM arquivos a
       LEFT JOIN clientes locador ON locador.id = a.cliente_locador_id
       LEFT JOIN clientes locatario ON locatario.id = a.cliente_locatario_id
@@ -91,8 +87,22 @@ async function listarArquivos(req, res) {
       [...params, limit, offset]
     );
 
+    const data = rows.map(row => {
+      const { logradouro, numero, bairro, cidade, estado, ...rest } = row;
+
+      return { ...rest,
+        imovel: {
+          logradouro,
+          numero,
+          bairro,
+          cidade,
+          estado
+        }
+      };
+    });
+
     return res.json({
-      data: rows,
+      data: data,
       pagination: {
         page,
         limit,
@@ -173,14 +183,14 @@ async function criarArquivo(req, res) {
   try {
     const { cliente_locador_id, cliente_locatario_id, imovel_locado_id, data_inicio, data_fim, status, observacoes } = req.body;
 
-    if (!cliente_locador_id || !cliente_locatario_id || !imovel_locado_id || !data_inicio) {
+    if (!cliente_locador_id || !cliente_locatario_id || !imovel_locado_id) {
       return res.status(400).json({
-        error: "Campos obrigatórios: cliente_locador_id, cliente_locatario_id, imovel_locado_id, data_inicio."
+        error: "Campos obrigatórios: cliente_locador_id, cliente_locatario_id, imovel_locado_id."
       });
     }
 
     const [result] = await db.query(`INSERT INTO arquivos (cliente_locador_id, cliente_locatario_id, imovel_locado_id, data_inicio, data_fim, status, observacoes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [cliente_locador_id, cliente_locatario_id, imovel_locado_id, data_inicio, data_fim || null, status, observacoes || null]
+      [cliente_locador_id, cliente_locatario_id, imovel_locado_id, data_inicio || null, data_fim || null, status, observacoes || null]
     );
 
     await createLog({
@@ -208,7 +218,7 @@ async function atualizarArquivo(req, res) {
     if (existe.length === 0) return res.status(404).json({ error: "Arquivo não encontrado." });
 
     await db.query(`UPDATE arquivos SET cliente_locador_id=?, cliente_locatario_id=?, imovel_locado_id=?, data_inicio=?, data_fim=?, status=?, observacoes=? WHERE id=?`,
-      [cliente_locador_id, cliente_locatario_id, imovel_locado_id, data_inicio, data_fim || null, status, observacoes || null, id]
+      [cliente_locador_id, cliente_locatario_id, imovel_locado_id, data_inicio || null, data_fim || null, status, observacoes || null, id]
     );
 
     await createLog({

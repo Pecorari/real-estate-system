@@ -26,7 +26,7 @@ export default function Imoveis() {
     setLoading(true);
 
     try {
-      const searchLimpo = /^[\d.\-\/]+$/.test(search) ? search.replace(/\D/g, "") : search;
+      const searchLimpo = /^[\d.\-/]+$/.test(search) ? search.replace(/\D/g, "") : search;
 
       const { data } = await api.get("/imoveis", {
         params: {

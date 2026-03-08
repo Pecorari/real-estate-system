@@ -1,5 +1,6 @@
 const db = require('../config/db_connection');
 const { createLog } = require("./logController");
+const { onlyNumbers } = require("../utils/normalizeString");
 
 async function getResumoImoveis(req, res) {
   try {
@@ -97,7 +98,7 @@ async function criarImovel(req, res) {
         if (!cliente_id || !tipo_imovel || !cep || !logradouro || !numero || !estado) throw new Error("Campos obrigatórios devem ser preenchido.");
 
         const [result] = await db.execute('INSERT INTO imoveis (cliente_id, tipo_imovel, cep, logradouro, numero, complemento, bairro, cidade, estado, area_m2, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [cliente_id, tipo_imovel, cep, logradouro, numero, complemento, bairro, cidade, estado, area_m2, status]
+            [cliente_id, tipo_imovel, onlyNumbers(cep), logradouro, numero, complemento, bairro, cidade, estado, area_m2, status]
         );
 
         await createLog({
@@ -136,7 +137,7 @@ async function atualizarImovel(req, res) {
         if (!cliente_id || !tipo_imovel || !cep || !logradouro || !numero || !estado) throw new Error("Campos obrigatórios devem ser preenchido.");
 
         const [result] = await db.execute('UPDATE imoveis SET cliente_id = ?, tipo_imovel = ?, cep = ?, logradouro = ?, numero = ?, complemento = ?, bairro = ?, cidade = ?, estado = ?, area_m2 = ?, status = ? WHERE id = ?',
-            [cliente_id, tipo_imovel, cep, logradouro, numero, complemento, bairro, cidade, estado, area_m2, status, id]
+            [cliente_id, tipo_imovel, onlyNumbers(cep), logradouro, numero, complemento, bairro, cidade, estado, area_m2, status, id]
         );
 
         if (result.affectedRows === 0) throw new Error("Imovel não encontrado.");

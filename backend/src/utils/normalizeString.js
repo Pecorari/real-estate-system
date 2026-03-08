@@ -9,4 +9,12 @@ function normalizeString(str) {
     .replace(/\s+/g, ' ');
 }
 
-module.exports = normalizeString;
+function onlyNumbers(str) {
+  if (!str) return str;
+  return str.replace(/\D/g, '');
+}
+
+module.exports = {
+  normalizeString,
+  onlyNumbers
+};

@@ -38,6 +38,7 @@ export default function Arquivos() {
       });
 
       setArquivos(data.data);
+      console.log(data.data);
       setTotalPages(data.pagination.totalPages);
     } catch (err) {
       console.error("Erro ao carregar arquivos:", err);
@@ -56,7 +57,7 @@ export default function Arquivos() {
   }, [page]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const timer = setTimeout(() => {  
       carregarArquivos(1);
       setPage(1);
     }, 400);
@@ -133,7 +134,24 @@ export default function Arquivos() {
                     id: arq.id,
                     locador: arq.locador_nome,
                     locatario: arq.locatario_nome,
-                    Imovel: arq.imovel_locado,
+                    Imovel: (
+                      <div>
+                        {/* < 1024px */}
+                        <span className="lg:hidden">
+                          {arq.imovel.logradouro} {arq.imovel.numero}
+                        </span>
+
+                        {/* 1024px até 1535px */}
+                        <span className="hidden lg:inline 2xl:hidden">
+                          {arq.imovel.logradouro} {arq.imovel.numero} - {arq.imovel.bairro}
+                        </span>
+
+                        {/* ≥ 1536px */}
+                        <span className="hidden 2xl:inline">
+                          {arq.imovel.logradouro} {arq.imovel.numero} - {arq.imovel.bairro}, {arq.imovel.cidade}/{arq.imovel.estado}
+                        </span>
+                      </div>
+                    ),
                     status: 
                       <div className="flex gap-2">
                         <span className={`px-2 py-0 rounded-full ${statusStyles[arq.status]?.bg || "bg-green-300"}`} />

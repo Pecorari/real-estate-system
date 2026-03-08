@@ -13,6 +13,7 @@ import titleCase from "../../../utils/formatarTitleCase";
 import { FaArrowLeft, FaEdit, FaTrash } from "react-icons/fa";
 import { BsHouseAdd } from "react-icons/bs";
 import { Button } from "../../../components/ui/Button";
+import formatarCep from "../../../utils/formatarCep";
 
 export default function ClienteDetalhe() {
   const { id } = useParams();
@@ -42,7 +43,7 @@ export default function ClienteDetalhe() {
 		bairro: "",
 		cidade: "",
 		estado: "",
-		area_m2: "",
+		area_m2: 0,
 		status: ""
   });
 
@@ -54,6 +55,11 @@ export default function ClienteDetalhe() {
     carregarTipos();
     // eslint-disable-next-line
   }, [id]);
+  useEffect(() => {
+  if (formImovel.cep.length === 8) {
+    buscarCep(formImovel.cep);
+  }
+}, [formImovel.cep]);
 
   const carregarCliente = async () => {
     try {
@@ -95,16 +101,10 @@ export default function ClienteDetalhe() {
   const abrirEditarCliente = () => {
     setErro("");
     setFormCliente({
-      tipo_imovel: "",
-      cep: "",
-      logradouro: "",
-      numero: "",
-      complemento: "",
-      bairro: "",
-      cidade: "",
-      estado: "",
-      area_m2: "",
-      status: ""
+      nome: cliente.nome || "",
+      cpf_cnpj: cliente.cpf_cnpj || "",
+      tipo_cliente_id: cliente.tipo_cliente_id || "",
+      observacoes: cliente.observacoes || ""
     });
     setModalEditClienteOpen(true);
   };
@@ -169,7 +169,7 @@ export default function ClienteDetalhe() {
       bairro: "",
       cidade: "",
       estado: "",
-      area_m2: "",
+      area_m2: 0,
       status: ""
     });
     setModalImovelOpen(true);
@@ -217,6 +217,27 @@ export default function ClienteDetalhe() {
   const podeTerImovel =
     cliente?.tipo_cliente?.nome === "locador" ||
     cliente?.tipo_cliente?.nome === "ambos";
+
+  const buscarCep = async (cep) => {
+    try {
+      if (cep.length !== 8) return;
+
+      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const data = await res.json();
+
+      if (data.erro) return;
+
+      setFormImovel((prev) => ({
+        ...prev,
+        logradouro: data.logradouro || "",
+        bairro: data.bairro || "",
+        cidade: data.localidade || "",
+        estado: data.uf || ""
+      }));
+    } catch (err) {
+      console.error("Erro ao buscar CEP:", err);
+    }
+  };
 
   if (loading || !cliente) return <p className="p-6">Carregando...</p>;
 
@@ -297,7 +318,7 @@ export default function ClienteDetalhe() {
                   </h2>
 
                   <div className="flex justify-end">
-                    <Button className="flex items-center gap-2" onClick={() => abrirAddImovel(true)}>
+                    <Button className="flex items-center gap-2" onClick={() => abrirAddImovel()}>
                       <BsHouseAdd />
                       <span className="hidden sm:inline">Adicionar Imovel</span>
                     </Button>
@@ -377,25 +398,25 @@ export default function ClienteDetalhe() {
         <form onSubmit={editarCliente}>
           <Input
             label="Nome"
-            value={cliente.nome}
+            value={formCliente.nome}
             onChange={(e) => setFormCliente({ ...formCliente, nome: e.target.value })}
           />
 
           <Input
             label="CPF / CNPJ"
-            value={cliente.cpf_cnpj}
+            value={formCliente.cpf_cnpj}
             onChange={(e) => setFormCliente({ ...formCliente, cpf_cnpj: maskCpfCnpj(e.target.value) })}
           />
 
           <Input
             label="observacoes"
-            value={cliente.observacoes}
+            value={formCliente.observacoes}
             onChange={(e) => setFormCliente({ ...formCliente, observacoes: e.target.value })}
           />
 
           <Select
             label="Tipo"
-            value={cliente.tipo_cliente_id}
+            value={formCliente.tipo_cliente_id}
             onChange={(e) => setFormCliente({ ...formCliente, tipo_cliente_id: Number(e.target.value) })}
           >
             <option value="">Selecione</option>
@@ -451,9 +472,10 @@ export default function ClienteDetalhe() {
             <div className="sm:w-40">
               <Input label="CEP"
                 required
-                type="number"
-                value={formImovel.cep}
-                onChange={(e) => setFormImovel({ ...formImovel, cep: e.target.value })}
+                type="text"
+                inputMode="numeric"
+                value={formatarCep(formImovel.cep)}
+                onChange={(e) => setFormImovel({ ...formImovel, cep: e.target.value.replace(/\D/g, "") })}
               />
             </div>
           </div>
@@ -488,8 +510,9 @@ export default function ClienteDetalhe() {
             </div>
             <div className="sm:w-24">
               <Input label="Estado"
+                maxLength={2}
                 value={formImovel.estado}
-                onChange={(e) => setFormImovel({ ...formImovel, estado: e.target.value })}
+                onChange={(e) => setFormImovel({ ...formImovel, estado: e.target.value.replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 2)})}
               />
             </div>
           </div>
