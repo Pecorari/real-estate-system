@@ -142,6 +142,7 @@ export default function Imoveis() {
                         {imovel.status.charAt(0).toUpperCase() + imovel.status.slice(1)}
                       </span>
                       <p className="mr-16"><strong>Endereço:</strong> {imovel.logradouro} n°{imovel.numero}, {imovel.bairro}, {imovel.cidade} - {imovel.estado}</p>
+                      {imovel.complemento ? <p><strong>Complemento:</strong> {imovel.complemento}</p> : <></>}
                       <p><strong>CEP:</strong> {imovel.cep}</p>
                       <p><strong>Tipo:</strong> {imovel.tipo_imovel}</p>
                       <p><strong>Área:</strong> {imovel.area_m2} m²</p>

@@ -150,11 +150,6 @@ export default function ClienteDetalhe() {
     setModalDeleteOpen(true);
   };
 
-  const statusImovelStyles = {
-    disponivel: "bg-green-100 text-green-700",
-    alugado: "bg-red-100 text-red-700",
-    inativo: "bg-gray-100 text-gray-600",
-  };
 
   const abrirAddImovel = () => {
     setEditImovelId(null)
@@ -237,6 +232,27 @@ export default function ClienteDetalhe() {
     } catch (err) {
       console.error("Erro ao buscar CEP:", err);
     }
+  };
+
+  const statusImovelStyles = {
+    disponivel: "bg-green-100 text-green-700",
+    alugado: "bg-red-100 text-red-700",
+    inativo: "bg-gray-100 text-gray-600",
+  };
+
+  const statusArquivoStyles = {
+    ativo: {
+      bg: "bg-lime-500",
+      text: "text-green-700",
+    },
+    encerrado: {
+      bg: "bg-zinc-500",
+      text: "text-gray-600",
+    },
+    inadimplente: {
+      bg: "bg-amber-500",
+      text: "text-yellow-700",
+    },
   };
 
   if (loading || !cliente) return <p className="p-6">Carregando...</p>;
@@ -335,6 +351,7 @@ export default function ClienteDetalhe() {
                           {imovel.status.charAt(0).toUpperCase() + imovel.status.slice(1)}
                         </span>
                         <p className="mr-16"><strong>Endereço:</strong> {imovel.logradouro} n°{imovel.numero}, {imovel.bairro}, {imovel.cidade} - {imovel.estado}</p>
+                        {imovel.complemento ? <p><strong>Complemento:</strong> {imovel.complemento}</p> : <></>}
                         <p><strong>CEP:</strong> {imovel.cep}</p>
                         <p><strong>Tipo:</strong> {imovel.tipo_imovel}</p>
                         <p><strong>Área:</strong> {imovel.area_m2} m²</p>
@@ -374,9 +391,10 @@ export default function ClienteDetalhe() {
                 <div className="grid grid-cols-1 gap-6 mt-8 text-sm sm:text-base">
                   {arquivos.map((arquivo) => (
                     <div key={arquivo.id} onClick={() => navigate(`/arquivos/${arquivo.id}`)} className="relative border rounded-xl p-5 bg-white shadow cursor-pointer transition-all duration-200 hover:shadow-lg hover:border-blue-400">
-                      <span className={`absolute top-0 right-0 px-2 py-1 text-sm font-semibold rounded-bl-lg rounded-tr-lg shadow-sm ${arquivo.status === "ativo" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                        {arquivo.status}
-                      </span>
+                        <div className="flex gap-2 absolute top-3 right-3 text-xs font-semibold">
+                          <p className={`text-xs font-semibold ${statusArquivoStyles[arquivo.status]?.text || "text-green-700"}`}>{arquivo.status.charAt(0).toUpperCase() + arquivo.status.slice(1)}</p>
+                          <span className={`px-2 py-0 rounded-full ${statusArquivoStyles[arquivo.status]?.bg || "bg-gray-100 text-gray-600"}`} />
+                        </div>
                       <p><strong>Locador:</strong> {arquivo.locador_nome}</p>
                       <p><strong>Locatario:</strong> {arquivo.locatario_nome}</p>
                       <p><strong>Imovel:</strong> {arquivo.imovel_locado}</p>

@@ -60,6 +60,7 @@ export default function ArquivoDetalhe() {
     try {
       setLoading(true);
       const { data } = await api.get(`/arquivo/${id}`);
+      console.log(data);
       setArquivo(data);
     } catch (err) {
       console.error("Erro ao carregar arquivo:", err);

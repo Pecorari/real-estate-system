@@ -65,18 +65,18 @@ export default function Arquivos() {
     return () => clearTimeout(timer);
     // eslint-disable-next-line
   }, [search, status]);
-
+  
   const statusStyles = {
     ativo: {
-      bg: "bg-green-400",
+      bg: "bg-lime-500",
       text: "text-green-700",
     },
     encerrado: {
-      bg: "bg-red-400",
-      text: "text-red-700",
+      bg: "bg-zinc-500",
+      text: "text-gray-600",
     },
     inadimplente: {
-      bg: "bg-yellow-400",
+      bg: "bg-amber-500",
       text: "text-yellow-700",
     },
   };
@@ -136,19 +136,20 @@ export default function Arquivos() {
                     locatario: arq.locatario_nome,
                     Imovel: (
                       <div>
-                        {/* < 1024px */}
                         <span className="lg:hidden">
-                          {arq.imovel.logradouro} {arq.imovel.numero}
+                          {arq.imovel.logradouro} n°{arq.imovel.numero}
                         </span>
 
-                        {/* 1024px até 1535px */}
-                        <span className="hidden lg:inline 2xl:hidden">
-                          {arq.imovel.logradouro} {arq.imovel.numero} - {arq.imovel.bairro}
+                        <span className="hidden lg:inline xl:hidden">
+                          {arq.imovel.logradouro} n°{arq.imovel.numero}, {arq.imovel.complemento}
                         </span>
 
-                        {/* ≥ 1536px */}
+                        <span className="hidden xl:inline 2xl:hidden">
+                          {arq.imovel.logradouro} n°{arq.imovel.numero}, {arq.imovel.complemento} - {arq.imovel.bairro}
+                        </span>
+
                         <span className="hidden 2xl:inline">
-                          {arq.imovel.logradouro} {arq.imovel.numero} - {arq.imovel.bairro}, {arq.imovel.cidade}/{arq.imovel.estado}
+                          {arq.imovel.logradouro} n°{arq.imovel.numero}, {arq.imovel.complemento} - {arq.imovel.bairro}, {arq.imovel.cidade}/{arq.imovel.estado}
                         </span>
                       </div>
                     ),

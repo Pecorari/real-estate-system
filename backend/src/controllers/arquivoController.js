@@ -73,6 +73,7 @@ async function listarArquivos(req, res) {
         locatario.nome AS locatario_nome,
         imovel.logradouro,
         imovel.numero,
+        imovel.complemento,
         imovel.bairro,
         imovel.cidade,
         imovel.estado
@@ -88,12 +89,13 @@ async function listarArquivos(req, res) {
     );
 
     const data = rows.map(row => {
-      const { logradouro, numero, bairro, cidade, estado, ...rest } = row;
+      const { logradouro, numero, complemento, bairro, cidade, estado, ...rest } = row;
 
       return { ...rest,
         imovel: {
           logradouro,
           numero,
+          complemento,
           bairro,
           cidade,
           estado
@@ -127,7 +129,12 @@ async function listarArquivosById(req, res) {
             locatario.nome AS locatario_nome,
             CONCAT(
               imovel.logradouro, ' n°',
-              imovel.numero, ' - ',
+              imovel.numero,
+              IF(imovel.complemento IS NOT NULL AND imovel.complemento != '', 
+                CONCAT(', ', imovel.complemento), 
+                ''
+              ),
+              ' - ',
               imovel.bairro, ', ',
               imovel.cidade, '/', 
               imovel.estado
@@ -158,7 +165,12 @@ async function detalharArquivo(req, res) {
         locatario.nome AS locatario_nome,
         CONCAT(
           imovel.logradouro, ' n°',
-          imovel.numero, ' - ',
+          imovel.numero,
+          IF(imovel.complemento IS NOT NULL AND imovel.complemento != '', 
+            CONCAT(', ', imovel.complemento), 
+            ''
+          ),
+          ' - ',
           imovel.bairro, ', ',
           imovel.cidade, '/', 
           imovel.estado
